@@ -11,24 +11,38 @@ from sqlalchemy import (
     ForeignKey,
     Float,
     Time,
-    DateTime
+    DateTime,
+    Integer,
+    Enum,
+    Text
 )
+
+from sqlalchemy.sql import func
+
+import enum
 
 class Base(DeclarativeBase):
     pass
+
+# Defining Enum to be used in Appointment table
+class AppointmentStatus(enum.Enum):
+    pending = 'pending'
+    confirmed = 'confirmed'
+    completed = 'completed'
+    canceled = 'canceled'
 
 
 # User model
 class User(Base):
     __tablename__ = "user"
     
-    user_id: Mapped[int] = mapped_column(primary_key=True)
-    firstName: Mapped[str] = mapped_column(String(50))
-    lastName: Mapped[str] = mapped_column(String(50))
-    email: Mapped[str] = mapped_column(String(50))
-    password: Mapped[str] = mapped_column(String(50))
-    phoneNumber: Mapped[str] = mapped_column(String(10))
-    is_admin: Mapped[bool] = mapped_column(Boolean)
+    user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    firstName: Mapped[str] = mapped_column(String(50), nullable=False)
+    lastName: Mapped[str] = mapped_column(String(50), nullable=False)
+    email: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
+    password: Mapped[str] = mapped_column(String(50), nullable=False)
+    phoneNumber: Mapped[str] = mapped_column(String(10), nullable=False, unique=True)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
     
     '''
     User class relationships
@@ -50,15 +64,14 @@ class User(Base):
 class Barber(Base):
     __tablename__ = "barber"
     
-    barber_id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.user_id"))
+    barber_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False, unique=True)
     
     '''
     Barber class relationships
     '''
 
     # Barber is linked to a single user (as specified by 'uselist = false' in User table above. One-to-One)
-    # This is how it is shown in ERD but not sure this is what we want. Will ask Monday.
     user: Mapped["User"] = relationship(back_populates="barber")
 
     # Barber can have multiple Appointments (One-to-Many)
@@ -71,10 +84,10 @@ class Barber(Base):
 class Appointment(Base):
     __tablename__ = "appointment"
     
-    appointment_id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.user_id"))
-    barber_id: Mapped[int] = mapped_column(ForeignKey("barber.barber_id"))
-    status: Mapped[str] = mapped_column(String(10))
+    appointment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False)
+    barber_id: Mapped[int] = mapped_column(Integer, ForeignKey("barber.barber_id", ondelete="CASCADE"), nullable=False)
+    status: Mapped[AppointmentStatus] = mapped_column(Enum(AppointmentStatus), nullable=False)
     
     '''
     Appointment class relationships
@@ -89,18 +102,17 @@ class Appointment(Base):
     # An Appointment can have multiple AppointmentService records ()
     services: Mapped[list["AppointmentService"]] = relationship(back_populates="appointment")
 
-    # One-to-Many - Appointment can have more than one schedule?
-    # This is the case in the ERD but not sure this is correct. Will ask Monday.
+    # One-to-Many - Appointment can have more than one schedule
     schedule: Mapped[list["Schedule"]] = relationship(back_populates="appointment")
 
 
 class Service(Base):
     __tablename__ = "service"
     
-    service_id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(50))
-    duration: Mapped[Time] = mapped_column(Time)
-    price: Mapped[float] = mapped_column(Float(5, 2))
+    service_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    duration: Mapped[Time] = mapped_column(Time, nullable=False)
+    price: Mapped[float] = mapped_column(Float(5, 2), nullable=False)
     
     '''
     Service class relationships
@@ -113,8 +125,8 @@ class Service(Base):
 class AppointmentService(Base):
     __tablename__ = "appointment_service"
     
-    service_id: Mapped[int] = mapped_column(ForeignKey("service.service_id"), primary_key=True)
-    appointment_id: Mapped[int] = mapped_column(ForeignKey("appointment.appointment_id"), primary_key=True)
+    service_id: Mapped[int] = mapped_column(Integer, ForeignKey("service.service_id", ondelete="CASCADE"), primary_key=True)
+    appointment_id: Mapped[int] = mapped_column(Integer, ForeignKey("appointment.appointment_id", ondelete="CASCADE"), primary_key=True)
     
     '''
     AppointmentService class relationships
@@ -130,12 +142,12 @@ class AppointmentService(Base):
 class Schedule(Base):
     __tablename__ = "schedule"
     
-    schedule_id: Mapped[int] = mapped_column(primary_key=True)
-    barber_id: Mapped[int] = mapped_column(ForeignKey("barber.barber_id"))
-    appointment_id: Mapped[int] = mapped_column(ForeignKey("appointment.appointment_id"))
-    date: Mapped[str] = mapped_column(String(10))
-    startTime: Mapped[Time] = mapped_column(Time)
-    endTime: Mapped[Time] = mapped_column(Time)
+    schedule_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    barber_id: Mapped[int] = mapped_column(ForeignKey("barber.barber_id", ondelete="CASCADE"), nullable=False)
+    appointment_id: Mapped[int] = mapped_column(ForeignKey("appointment.appointment_id", ondelete="SET NULL"))
+    date: Mapped[str] = mapped_column(String(10), nullable=False)
+    startTime: Mapped[Time] = mapped_column(Time, nullable=False)
+    endTime: Mapped[Time] = mapped_column(Time, nullable=False)
     
     '''
     Schedule class relationships
@@ -153,9 +165,9 @@ class Thread(Base):
     '''
     Thread class relationships
     '''
-    thread_id: Mapped[int] = mapped_column(primary_key=True)
-    receivingUser: Mapped[int] = mapped_column(ForeignKey("user.user_id"))
-    sendingUser: Mapped[int] = mapped_column(ForeignKey("user.user_id"))
+    thread_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    receivingUser: Mapped[int] = mapped_column(ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False)
+    sendingUser: Mapped[int] = mapped_column(ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False)
     
     # Each thread has one recieving User (Many-to-One)
     receiving_user: Mapped["User"] = relationship(foreign_keys=[receivingUser], back_populates="received_threads")
@@ -173,11 +185,11 @@ class Message(Base):
     Message class relationships
     '''
 
-    message_id: Mapped[int] = mapped_column(primary_key=True)
-    thread_id: Mapped[int] = mapped_column(ForeignKey("thread.thread_id"))
+    message_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    thread_id: Mapped[int] = mapped_column(ForeignKey("thread.thread_id", ondelete="CASCADE"), nullable=False)
     hasActiveMessage: Mapped[bool] = mapped_column(Boolean)
-    text: Mapped[str] = mapped_column(String)
-    timeStamp: Mapped[DateTime] = mapped_column(DateTime)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    timeStamp: Mapped[DateTime] = mapped_column(DateTime, default=func.current_timestamp())
     
     # Each message belongs to one thread (Many-To-One)
     thread: Mapped["Thread"] = relationship(back_populates="messages")
