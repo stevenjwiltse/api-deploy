@@ -19,7 +19,7 @@ app.add_middleware(
 )
 
 # Connect user_router
-app.include_route(user_router)
+app.include_router(user_router)
 
 
 @app.get("/")
