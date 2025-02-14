@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
-from core.db import get_db_session
-from operations.user_operations import UserOperations
-from modules.user.user_schema import UserResponse, UserCreate, UserBase
+from src.core.db import get_db_session
+from src.operations.user_operations import UserOperations
+from src.modules.user.user_schema import UserResponse, UserCreate, UserBase
 
 '''
 Endpoints for interactions with users table
