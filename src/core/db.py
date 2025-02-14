@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 
 
 # Temporary individual LocalHost DB until our MySQL DB container is set up
-SQL_ALCHEMY_DATABASE_URL = "mysql+aiomysql://root:rootpassword@127.0.0.1:3306/barbershopdb"   
+SQL_ALCHEMY_DATABASE_URL = "mysql+aiomysql://root:root@127.0.0.1:3306/barbershopdb"   
 
 
 engine = create_async_engine(SQL_ALCHEMY_DATABASE_URL, echo=True)
