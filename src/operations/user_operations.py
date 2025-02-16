@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from src.modules.user.models import User
+from modules.user.models import User
 from pydantic import EmailStr
-from src.modules.user.user_schema import UserCreate, UserBase
+from modules.user.user_schema import UserCreate, UserBase
 from typing import List, Optional
 
 '''
