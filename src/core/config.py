@@ -7,11 +7,12 @@ load_dotenv()
 
 required_environment_variables = [
     "SECRET_KEY",
-    "POSTGRES_USER",
-    "POSTGRES_PASSWORD",
-    "POSTGRES_DB",
-    "POSTGRES_HOST",
-    "POSTGRES_PORT",
+    "MYSQL_USER",
+    "MYSQL_PASSWORD",
+    "MYSQL_DB",
+    "MYSQL_HOST",
+    "MYSQL_PORT",
+    "MYSQL_ECHO",
     "DEBUG",
     "BACKEND_CORS_ORIGINS",
     "FRONTEND_HOST",
@@ -19,11 +20,12 @@ required_environment_variables = [
 
 class BaseSettings(TypedDict):
     secret_key: str
-    postgres_user: str
-    postgres_password: str
-    postgres_db: str
-    postgres_host: str
-    postgres_port: str
+    mysql_user: str
+    mysql_password: str
+    mysql_db: str
+    mysql_host: str
+    mysql_port: str
+    mysql_echo: bool
     debug: bool
     backend_cors_origins: list[str]
     frontend_host: str
@@ -38,21 +40,25 @@ class Settings:
             if env_var not in os.environ:
                 raise EnvironmentError(f"Missing environment variable: {env_var}")
             
-    def get_config() -> BaseSettings:
+    def get_config(self) -> BaseSettings:
         return {
             "secret_key": os.getenv("SECRET_KEY"),
-            "postgres_user": os.getenv("POSTGRES_USER"),
-            "postgres_password": os.getenv("POSTGRES_PASSWORD"),
-            "postgres_db": os.getenv("POSTGRES_DB"),
-            "postgres_host": os.getenv("POSTGRES_HOST"),
-            "postgres_port": os.getenv("POSTGRES_PORT"),
-            "debug": os.getenv("DEBUG"),
+            "mysql_user": os.getenv("MYSQL_USER"),
+            "mysql_password": os.getenv("MYSQL_PASSWORD"),
+            "mysql_db": os.getenv("MYSQLl_DB"),
+            "mysql_host": os.getenv("mMYSQL_HOST"),
+            "mysql_port": os.getenv("MYSQL_PORT"),
+            "mysql_echo": self.check_boolean(os.getenv("MYSQL_ECHO")),
+            "debug": self.check_boolean(os.getenv("DEBUG")),
             "backend_cors_origins": os.getenv("BACKEND_CORS_ORIGINS").split(","),
             "frontend_host": os.getenv("FRONTEND_HOST"),
         }
     
-    def get_database_url() -> str:
-        return f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
+    def check_boolean(self, value: str) -> bool:
+        return value.lower() == "true"
+    
+    def get_database_url(self) -> str:
+        return f"mysql+aiomysql://{os.getenv('MYSQL_USER')}:{os.getenv('MYSQL_PASSWORD')}@{os.getenv('MYSQL_HOST')}:{os.getenv('MYSQL_PORT')}/{os.getenv('MYSQL_DB')}"
     
 
 settings = Settings()
