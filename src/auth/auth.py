@@ -36,12 +36,7 @@ keycloak_connection = KeycloakOpenIDConnection(
     client_secret_key=KEYCLOAK_API_SECRET,
     verify=True
 )
-print("URL",KEYCLOAK_SERVER_URL)
-print("REALM",KEYCLOAK_REALM)
-print("CLIENT",KEYCLOAK_API_CLIENT_ID)
-print("USERNAME",KEYCLOAK_ADMIN_USERNAME)
-print("PW",KEYCLOAK_ADMIN_PASSWORD)
-print("SECRET",KEYCLOAK_API_SECRET)
+
 keycloak_admin = KeycloakAdmin(connection=keycloak_connection)
 
 # User Model
