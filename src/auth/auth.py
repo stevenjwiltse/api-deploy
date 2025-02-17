@@ -3,24 +3,27 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from keycloak import KeycloakAdmin, KeycloakOpenID, KeycloakOpenIDConnection
 from pydantic import BaseModel
 
+import os
+from dotenv import load_dotenv
+load_dotenv()
 # Create a FastAPI router for authentication
 auth_router = APIRouter()
 
 
 # Keycloak Credentials
-KEYCLOAK_SERVER_URL = "http://localhost:8080/"
-KEYCLOAK_REALM = "barbershop-realm"
-KEYCLOAK_CLIENT_ID = "barbershop-client"
-KEYCLOAK_ADMIN_USERNAME = "admin"
-KEYCLOAK_ADMIN_PASSWORD = "admin"
-KEYCLOAK_SECRET = "MvWNVxYDblXQk6Uzzqu77KltL0Pxa0ib"
+KEYCLOAK_SERVER_URL=os.getenv("KEYCLOAK_SERVER_URL")
+KEYCLOAK_REALM=os.getenv("KEYCLOAK_REALM")
+KEYCLOAK_API_CLIENT_ID =os.getenv("KEYCLOAK_API_CLIENT_ID")
+KEYCLOAK_ADMIN_USERNAME=os.getenv("KEYCLOAK_ADMIN_USERNAME")
+KEYCLOAK_ADMIN_PASSWORD=os.getenv("KEYCLOAK_ADMIN_PASSWORD")
+KEYCLOAK_API_SECRET=os.getenv("KEYCLOAK_API_SECRET")
 
 # Keycloak OpenID Config
 keycloak_openid = KeycloakOpenID(
     server_url=KEYCLOAK_SERVER_URL,
-    client_id=KEYCLOAK_CLIENT_ID,
+    client_id=KEYCLOAK_API_CLIENT_ID,
     realm_name=KEYCLOAK_REALM,
-    client_secret_key=KEYCLOAK_SECRET
+    client_secret_key=KEYCLOAK_API_SECRET
 )
 
 # Credentials Admin Config
@@ -29,8 +32,8 @@ keycloak_connection = KeycloakOpenIDConnection(
     username=KEYCLOAK_ADMIN_USERNAME,
     password=KEYCLOAK_ADMIN_PASSWORD,
     realm_name=KEYCLOAK_REALM,
-    client_id=KEYCLOAK_CLIENT_ID,
-    client_secret_key=KEYCLOAK_SECRET,
+    client_id=KEYCLOAK_API_CLIENT_ID,
+    client_secret_key=KEYCLOAK_API_SECRET,
     verify=True
 )
 

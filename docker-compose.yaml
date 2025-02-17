@@ -5,10 +5,16 @@ services:
         container_name: keycloak
         ports:
             - "8080:8080"
+        env_file:
+            - .env
         environment:
-            - KEYCLOAK_ADMIN=admin
-            - KEYCLOAK_ADMIN_PASSWORD=admin
-        command: ["start-dev"]
+            - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN_USERNAME}
+            - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+            - KEYCLOAK_API_SECRET=${KEYCLOAK_API_SECRET}
+            - KEYCLOAK_FRONT_END_SECRET=${KEYCLOAK_FRONT_END_SECRET}
+        volumes:
+            - ./keycloak/realm-config.json:/opt/keycloak/data/import/realm-config.json
+        command: ["start-dev", "--import-realm"]
 
     db:
         image: mysql:latest
