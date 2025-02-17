@@ -6,3 +6,4 @@ python-dotenv
 sqlmodel
 aiomysql
 cryptography
+python-keycloak

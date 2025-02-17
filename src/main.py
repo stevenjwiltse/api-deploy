@@ -4,7 +4,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.db import sessionmanager
-
+from auth.auth import auth_router
 from routers.user_router import user_router
 
 
@@ -24,7 +24,8 @@ app.add_middleware(
 
     allow_origins=[
         # Only localhost for now
-        "http://localhost:8000"
+        "http://localhost:8000",
+        "http://localhost:8080"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -33,6 +34,8 @@ app.add_middleware(
 
 # Connect user_router
 app.include_router(user_router)
+# Connect auth_router
+app.include_router(auth_router)
 
 
 @app.get("/healthz")
