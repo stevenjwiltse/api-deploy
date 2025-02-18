@@ -50,7 +50,7 @@ services:
         working_dir:
             /app/src
         volumes:
-            - ./:/app
+            - ./src:/app
         env_file:
             - .env
         environment:
