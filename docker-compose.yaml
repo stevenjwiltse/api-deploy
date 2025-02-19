@@ -50,7 +50,7 @@ services:
         working_dir:
             /app/src
         volumes:
-            - ./src:/app
+            - ./:/app
         env_file:
             - .env
         environment:
@@ -63,7 +63,7 @@ services:
             - DEBUG=${DEBUG}
             - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
             - FRONTEND_HOST=${FRONTEND_HOST}
-        command: pip install -r ../requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+        command: bash -c "pip install -r ../requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
 networks:
     barber-shop-network:
         external: true
