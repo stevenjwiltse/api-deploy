@@ -520,7 +520,24 @@
   "webAuthnPolicyPasswordlessAvoidSameAuthenticatorRegister": false,
   "webAuthnPolicyPasswordlessAcceptableAaguids": [],
   "webAuthnPolicyPasswordlessExtraOrigins": [],
+  
   "users": [
+    {
+      "username": "admin",
+      "email": "admin@barbershop.com",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin"
+        }
+      ],
+      "realmRoles": ["admin"],
+      "attributes": {
+        "firstName": "admin",
+        "lastName": "admin"
+      }
+    },
     {
       "id": "f1df5fa8-98be-4153-94c9-82a59b6d157e",
       "username": "service-account-barbershop-api-client",
