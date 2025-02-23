@@ -7,3 +7,5 @@ sqlmodel
 aiomysql
 cryptography
 python-keycloak
+pydantic-settings
+poetry
