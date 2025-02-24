@@ -5,7 +5,7 @@ from typing import List
 from core.db import get_db_session
 from core.dependencies import DBSessionDep
 from operations.user_operations import UserOperations
-from modules.user.user_schema import UserResponse, UserCreate, UserBase
+from modules.user.user_schema import UserResponse, UserCreate, UserBase, UserUpdate
 
 '''
 Endpoints for interactions with users table
@@ -37,16 +37,16 @@ async def get_user(user_id: int, db_session: DBSessionDep):
     user_ops = UserOperations(db_session)
     user = await user_ops.get_user_by_id(user_id)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="User not found with ID provided")
     return user
 
 # PUT endpoint to update a specific user in the database by their ID
 @user_router.put("/{user_id}", response_model=UserResponse)
-async def update_user(user_id: int, user: UserBase, db_session: DBSessionDep):
+async def update_user(user_id: int, user: UserUpdate, db_session: DBSessionDep):
     user_ops = UserOperations(db_session)
     updated_user = await user_ops.update_user(user_id, user)
     if not updated_user:
-        raise HTTPException(status_code=404, detail="User not found or update failed")
+        raise HTTPException(status_code=404, detail="User not found with ID provided")
     return updated_user
 
 # DELETE endpoint to delete a user from the database by their ID
@@ -55,6 +55,6 @@ async def delete_user(user_id: int, db_session: DBSessionDep):
     user_ops = UserOperations(db_session)
     success = await user_ops.delete_user(user_id)
     if not success:
-        raise HTTPException(status_code=404, detail="User not found or deletion failed")
+        raise HTTPException(status_code=404, detail="User not found with ID provided")
     return {"message": "User deleted successfully"}
 
