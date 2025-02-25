@@ -16,6 +16,14 @@ required_environment_variables = [
     "DEBUG",
     "BACKEND_CORS_ORIGINS",
     "FRONTEND_HOST",
+    "KEYCLOAK_SERVER_URL",
+    "KEYCLOAK_REALM",
+    "KEYCLOAK_API_CLIENT_ID",
+    "KEYCLOAK_FRONT_END_CLIENT_ID",
+    "KEYCLOAK_API_SECRET",
+    "KEYCLOAK_FRONT_END_SECRET",
+    "KEYCLOAK_ADMIN_USERNAME",
+    "KEYCLOAK_ADMIN_PASSWORD",
 ]
 
 class BaseSettings(TypedDict):
@@ -29,7 +37,14 @@ class BaseSettings(TypedDict):
     debug: bool
     backend_cors_origins: list[str]
     frontend_host: str
-
+    keycloak_server_url: str
+    keycloak_realm: str
+    keycloak_api_client_id: str
+    keycloak_frontend_client_id: str
+    keycloak_api_secret: str
+    keycloak_front_end_secret: str
+    keycloak_admin_username: str
+    keycloak_admin_password: str
 
 class Settings:
     def __init__(self):
@@ -52,6 +67,14 @@ class Settings:
             "debug": self.check_boolean(os.getenv("DEBUG")),
             "backend_cors_origins": os.getenv("BACKEND_CORS_ORIGINS").split(","),
             "frontend_host": os.getenv("FRONTEND_HOST"),
+            "keycloak_server_url": os.getenv("KEYCLOAK_SERVER_URL"),
+            "keycloak_realm": os.getenv("KEYCLOAK_REALM"),
+            "keycloak_api_client_id": os.getenv("KEYCLOAK_API_CLIENT_ID"),
+            "keycloak_front_end_client_id": os.getenv("KEYCLOAK_FRONT_END_CLIENT_ID"),
+            "keycloak_api_secret": os.getenv("KEYCLOAK_API_SECRET"),
+            "keycloak_front_end_secret": os.getenv("KEYCLOAK_FRONT_END_SECRET"),
+            "keycloak_admin_username": os.getenv("KEYCLOAK_ADMIN_USERNAME"),
+            "keycloak_admin_password": os.getenv("KEYCLOAK_ADMIN_PASSWORD"),
         }
     
     def check_boolean(self, value: str) -> bool:
@@ -62,3 +85,4 @@ class Settings:
     
 
 settings = Settings()
+
