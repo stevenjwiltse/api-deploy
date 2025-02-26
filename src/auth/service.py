@@ -2,7 +2,10 @@ from fastapi import HTTPException, status
 from keycloak.exceptions import KeycloakAuthenticationError
 from core.config import settings
 from auth.models import UserInfo
-from keycloak import KeycloakOpenID
+from keycloak import KeycloakOpenID, KeycloakOpenIDConnection, KeycloakAdmin
+from auth.models import UserCreate
+
+
 
 class AuthService():
     # Keycloak connection using credentials from core/config/settings
@@ -13,6 +16,19 @@ class AuthService():
         client_secret_key=settings.get_config()["keycloak_api_secret"],
         )
     
+    # Keycloak Admin (For User Management)
+    keycloak_admin_connection = KeycloakOpenIDConnection(
+        server_url=settings.get_config()["keycloak_server_url"],
+        username=settings.get_config()["keycloak_admin_username"],
+        password=settings.get_config()["keycloak_admin_password"],
+        realm_name=settings.get_config()["keycloak_realm"],
+        client_id=settings.get_config()["keycloak_api_client_id"],
+        client_secret_key=settings.get_config()["keycloak_api_secret"],
+        verify=True,
+    )
+    keycloak_admin = KeycloakAdmin(connection=keycloak_admin_connection)
+
+
     # Checks username and password against Keycloak DB and return JWT
     @staticmethod
     def authenticate_user(username: str, password: str) -> str:
@@ -52,4 +68,26 @@ class AuthService():
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials",
+            )
+        
+        # Register a new user in Keycloak
+    @staticmethod
+    def register_kc_user(user: UserCreate):
+        """
+        Register a new user in Keycloak.
+        """
+        user_representation = {
+            "username": user.username,
+            "email": user.email,
+            "firstName": user.first_name,
+            "lastName": user.last_name,
+            "enabled": True,
+            "credentials": [{"type": "password", "value": user.password, "temporary": False}],
+        }
+        try:
+            AuthService.keycloak_admin.create_user(user_representation)
+            return {"message": "User created successfully"}
+        except Exception as e:
+            raise HTTPException(
+                status_code=400, detail=f"Error creating user: {str(e)}"
             )

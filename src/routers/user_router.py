@@ -6,7 +6,8 @@ from core.db import get_db_session
 from core.dependencies import DBSessionDep
 from operations.user_operations import UserOperations
 from modules.user.user_schema import UserResponse, UserCreate, UserBase
-
+from auth.service import AuthService
+from auth.models import UserCreate as KCUser
 '''
 Endpoints for interactions with users table
 '''
@@ -15,6 +16,11 @@ user_router = APIRouter(
     prefix="/api/v1/users",
     tags=["users"],
 )
+
+# User registration route for Keycloak
+@user_router.post("/auth")
+def register_user(user: KCUser):
+    return AuthService.register_kc_user(user)
 
 # POST endpoint to create a new user in the database
 @user_router.post("", response_model=UserResponse)

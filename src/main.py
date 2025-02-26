@@ -5,7 +5,6 @@ from fastapi import FastAPI, Depends, Form
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from core.db import sessionmanager
-from auth.auth import auth_router
 from routers.user_router import user_router
 from auth.models import TokenResponse, UserInfo
 from auth.controller import AuthController
@@ -38,9 +37,8 @@ app.add_middleware(
 
 
 # Connect user_router
-#app.include_router(user_router)
-# Connect auth_router
-#app.include_router(auth_router)
+app.include_router(user_router)
+
 
 # Define the root endpoint
 @app.get("/")
