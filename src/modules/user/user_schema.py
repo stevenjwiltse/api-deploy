@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 '''
 Pydantic validation models for the users table endpoints
@@ -10,6 +11,13 @@ class UserBase(BaseModel):
     email: EmailStr
     phoneNumber: str
     is_admin: bool = False
+
+class UserUpdate(BaseModel):
+    firstName: Optional[str] = None
+    lastName: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phoneNumber: Optional[str] = None
+    is_admin: Optional[bool] = None
 
 class UserCreate(UserBase):
     password: str
