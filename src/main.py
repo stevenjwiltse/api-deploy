@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.db import sessionmanager
 
 from routers.user_router import user_router
+from routers.barber_router import barber_router
 
 
 @asynccontextmanager
@@ -33,6 +34,9 @@ app.add_middleware(
 
 # Connect user_router
 app.include_router(user_router)
+
+# Connect barber_router
+app.include_router(barber_router)
 
 
 @app.get("/healthz")
