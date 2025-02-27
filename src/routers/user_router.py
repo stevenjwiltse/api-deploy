@@ -1,13 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-
 from core.db import get_db_session
 from core.dependencies import DBSessionDep
 from operations.user_operations import UserOperations
 from modules.user.user_schema import UserResponse, UserCreate, UserBase, UserUpdate
 from auth.service import AuthService
-from auth.models import UserCreate as KCUser
+import logging
 '''
 Endpoints for interactions with users table
 '''
@@ -17,18 +16,21 @@ user_router = APIRouter(
     tags=["users"],
 )
 
-# User registration route for Keycloak
-@user_router.post("/auth")
-def register_user(user: KCUser):
-    return AuthService.register_kc_user(user)
-
 # POST endpoint to create a new user in the database
 @user_router.post("", response_model=UserResponse)
 async def create_user(user: UserCreate, db_session: DBSessionDep):
+
+    # Creates a user in DB
     user_ops = UserOperations(db_session)
     created_user = await user_ops.create_user(user)
     if not created_user:
         raise HTTPException(status_code=400, detail="User creation failed")
+    
+    # Creates a Keycloak user 
+    created_kc_user = AuthService.register_kc_user(user)
+    if not created_kc_user:
+        raise HTTPException(status_code=400, detail=f"Keycloak user creation has failed")
+    
     return created_user
 
 # GET endpoint to get all users from the database

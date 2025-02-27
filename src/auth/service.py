@@ -3,7 +3,7 @@ from keycloak.exceptions import KeycloakAuthenticationError
 from core.config import settings
 from auth.models import UserInfo
 from keycloak import KeycloakOpenID, KeycloakOpenIDConnection, KeycloakAdmin
-from auth.models import UserCreate
+from modules.user.user_schema import UserCreate
 
 
 
@@ -70,20 +70,24 @@ class AuthService():
                 detail="Could not validate credentials",
             )
         
-        # Register a new user in Keycloak
+    # Register a new user in Keycloak
     @staticmethod
     def register_kc_user(user: UserCreate):
         """
         Register a new user in Keycloak.
         """
+        
         user_representation = {
-            "username": user.username,
+            "username": user.email,
             "email": user.email,
-            "firstName": user.first_name,
-            "lastName": user.last_name,
+            "firstName": user.firstName,
+            "lastName": user.lastName,
             "enabled": True,
             "credentials": [{"type": "password", "value": user.password, "temporary": False}],
         }
+
+
+
         try:
             AuthService.keycloak_admin.create_user(user_representation)
             return {"message": "User created successfully"}
