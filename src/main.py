@@ -84,6 +84,15 @@ async def protected_endpoint(
     """
     return AuthController.protected_endpoint(credentials)
 
+
+# Protected role-based endpoint for testing
+@app.get("/barber/protected", response_model=UserInfo)
+async def barber_protected(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+):
+    return AuthController.protected_endpoint(credentials, required_role="barber")
+
+
 @app.get("/healthz")
 async def root():
     return {"healthy": True}

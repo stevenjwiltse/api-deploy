@@ -57,6 +57,7 @@ class AuthController:
     @staticmethod
     def protected_endpoint(
         credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+        required_role: str = None  # Optional parameter to enforce role-based access
     ) -> UserInfo:
         """
         Access a protected resource that requires valid token authentication.
@@ -83,4 +84,13 @@ class AuthController:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+        # If a role is required, enforce role-based access
+        if required_role and required_role not in user_info.roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"***Access denied. Requires '{required_role}'.",
+        )
         return user_info
+    
+
+    

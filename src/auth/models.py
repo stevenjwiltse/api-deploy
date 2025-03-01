@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List, Dict
 
 class TokenRequest(BaseModel):
     username: str
@@ -16,4 +16,6 @@ class UserInfo(BaseModel):
     email: str
     first_name: str
     last_name: str
+    roles: List
+
 
