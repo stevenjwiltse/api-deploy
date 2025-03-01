@@ -4,10 +4,12 @@ from operations.barber_operations import BarberOperations
 from core.dependencies import DBSessionDep
 from modules.user.barber_schema import BarberResponse, BarberBase
 from typing import List
+from auth.service import AuthService
 
 barber_router = APIRouter(
     prefix="/api/v1/barbers",
     tags=["barbers"],
+    dependencies=[Depends(AuthService.has_role('barber'))],
 )
 
 # POST endpoint to create a barber for an existing user by user_id
