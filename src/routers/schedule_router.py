@@ -1,0 +1,62 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
+from core.db import get_db_session
+from core.dependencies import DBSessionDep
+from operations.schedule_operations import ScheduleOperations
+from modules.schedule_schema import ScheduleResponse, ScheduleCreate, ScheduleUpdate
+import logging
+
+'''
+Endpoints for interactions with schedule table
+'''
+
+schedule_router = APIRouter(
+    prefix="/api/v1/schedules",
+    tags=["schedules"],
+)
+
+# POST endpoint to create a new schedule block in the database
+@schedule_router.post("", response_model=ScheduleResponse)
+async def create_schedule(schedule: ScheduleCreate, db_session: DBSessionDep):
+
+    schedule_ops = ScheduleOperations(db_session)
+    created_schedule = await schedule_ops.create_schedule(schedule)
+    if not created_schedule:
+        raise HTTPException(status_code=400, detail="Schedule creation failed")
+    
+    return created_schedule
+
+# GET endpoint to get all schedule blocks from the database
+@schedule_router.get("", response_model=List[ScheduleResponse])
+async def get_schedules(db_session: DBSessionDep):
+    schedule_ops = ScheduleOperations(db_session)
+    return await schedule_ops.get_all_schedules()
+
+# GET endpoint to retrieve a specific schedule block from the database by the schedule_id
+@schedule_router.get("/{schedule_id}", response_model=ScheduleResponse)
+async def get_schedule(schedule_id: int, db_session: DBSessionDep):
+    schedule_ops = ScheduleOperations(db_session)
+    schedule = await schedule_ops.get_schedule_by_id(schedule_id)
+    if not schedule:
+        raise HTTPException(status_code=404, detail="Schedule block with ID provided not found")
+    return schedule
+
+# PUT endpoint to update a specific schedule block in the database by the schedule_id
+@schedule_router.put("/{schedule_id}", response_model=ScheduleResponse)
+async def update_schedule(schedule_id: int, schedule: ScheduleUpdate, db_session: DBSessionDep):
+    schedule_ops = ScheduleOperations(db_session)
+    updated_schedule = await schedule_ops.update_schedule(schedule_id, schedule)
+    if not updated_schedule:
+        raise HTTPException(status_code=404, detail="Schedule block with ID provided not found")
+    return updated_schedule
+
+# DELETE endpoint to delete a schedule block from the database by the schedule_id
+@schedule_router.delete("/{schedule_id}", response_model=dict)
+async def delete_schedule(schedule_id: int, db_session: DBSessionDep):
+    schedule_ops = ScheduleOperations(db_session)
+    success = await schedule_ops.delete_schedule(schedule_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Schedule with ID provided not found")
+    return {"message": "Schedule block deleted successfully"}
+
