@@ -4,7 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from modules.user.models import Schedule
 from typing import List, Optional
 from fastapi import HTTPException
-from sqlalchemy import Time
+from datetime import time
 
 '''
 CRUD operations for interacting with the schedule database table

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from sqlalchemy import Time
+from datetime import time
 from typing import Optional
 
 '''
@@ -10,8 +10,8 @@ class ScheduleCreate(BaseModel):
     barber_id: int
     appointment_id: Optional[int] = None #schedule blocks initially are not associated with an appointment
     date: str
-    startTime: Time
-    endTime: Time
+    startTime: time
+    endTime: time
 
     class Config:
         arbitrary_types_allowed = True
@@ -20,8 +20,8 @@ class ScheduleUpdate(BaseModel):
     barber_id: Optional[int] = None
     appointment_id: Optional[int] = None #schedule blocks initially are not associated with an appointment
     date: Optional[str] = None
-    startTime: Optional[Time] = None
-    endTime: Optional[Time] = None
+    startTime: Optional[time] = None
+    endTime: Optional[time] = None
 
     class Config:
         arbitrary_types_allowed = True
