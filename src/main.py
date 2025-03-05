@@ -9,6 +9,7 @@ from routers.user_router import user_router
 from auth.models import TokenResponse, UserInfo
 from auth.controller import AuthController
 from routers.barber_router import barber_router
+from routers.service_router import service_router
 from routers.schedule_router import schedule_router
 
 
@@ -45,9 +46,11 @@ app.include_router(user_router)
 # Connect barber_router
 app.include_router(barber_router)
 
-#Connect schedule_router
-app.include_router(schedule_router)
+# Connect service_router
+app.include_router(service_router)
 
+# Connect schedule_router
+app.include_router(schedule_router)
 
 # Define the root endpoint
 @app.get("/")
