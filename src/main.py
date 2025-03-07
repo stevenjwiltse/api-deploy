@@ -10,6 +10,8 @@ from routers.user_router import user_router
 from auth.models import TokenResponse, UserInfo
 from auth.controller import AuthController
 from routers.barber_router import barber_router
+from routers.service_router import service_router
+from routers.schedule_router import schedule_router
 
 
 @asynccontextmanager
@@ -42,6 +44,11 @@ app.include_router(user_router)
 # Connect barber_router
 app.include_router(barber_router)
 
+# Connect service_router
+app.include_router(service_router)
+
+# Connect schedule_router
+app.include_router(schedule_router)
 
 # Define the root endpoint
 @app.get("/")
@@ -81,6 +88,15 @@ async def protected_endpoint(
         UserInfo: Information about the authenticated user.
     """
     return AuthController.protected_endpoint(credentials)
+
+
+# Protected role-based endpoint for testing
+@app.get("/barber/protected", response_model=UserInfo)
+async def barber_protected(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+):
+    return AuthController.protected_endpoint(credentials, required_role="barber")
+
 
 @app.get("/healthz")
 async def root():

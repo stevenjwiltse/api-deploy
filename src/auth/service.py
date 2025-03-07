@@ -1,10 +1,10 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Security, Depends
 from keycloak.exceptions import KeycloakAuthenticationError
 from core.config import settings
 from auth.models import UserInfo
 from keycloak import KeycloakOpenID, KeycloakOpenIDConnection, KeycloakAdmin
 from modules.user.user_schema import UserCreate
-
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 
 class AuthService():
@@ -51,19 +51,28 @@ class AuthService():
         Verify the given token and return user information.
         """
         try:
+            # Retrives user data from the Keycloak server
             user_info = AuthService.keycloak_openid.userinfo(token)
-            print(user_info)
+            user_roles = AuthService.keycloak_admin.get_realm_roles_of_user(user_info["sub"])
+
+            # Parses user roles into list 
+            roles = [role['name'] for role in user_roles]
+
             if not user_info:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
                 )
-            return UserInfo(
+            
+            this_user = UserInfo(
                 username=user_info["preferred_username"],
                 email=user_info.get("email"),
                 full_name=user_info.get("name"),
                 first_name=user_info.get("given_name"),
-                last_name=user_info.get("family_name"), 
-)           
+                last_name=user_info.get("family_name"),
+                roles=roles
+            )           
+
+            return this_user
         except KeycloakAuthenticationError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -96,3 +105,18 @@ class AuthService():
             raise HTTPException(
                 status_code=400, detail=f"Error creating user: {str(e)}"
             )
+        
+    @staticmethod
+    def has_role(required_role: str):
+        bearer_scheme = HTTPBearer()
+        def role_dependency(credentials: HTTPAuthorizationCredentials = Security(bearer_scheme)):
+            token = credentials.credentials
+            user_info = AuthService.verify_token(token)
+
+            if required_role and required_role not in user_info.roles:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Access forbidden: Requires '{required_role}' role"
+                )
+            return user_info
+        return role_dependency

@@ -60,9 +60,9 @@ CREATE TABLE schedule (
 -- Thread Table (Messaging)
 CREATE TABLE thread (
     thread_id INT PRIMARY KEY AUTO_INCREMENT,
-    recievingUser INT NOT NULL,
+    receivingUser INT NOT NULL,
     sendingUser INT NOT NULL,
-    FOREIGN KEY (recievingUser) REFERENCES user(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (receivingUser) REFERENCES user(user_id) ON DELETE CASCADE,
     FOREIGN KEY (sendingUser) REFERENCES user(user_id) ON DELETE CASCADE
 );
 
@@ -126,18 +126,18 @@ INSERT INTO schedule (barber_id, appointment_id, date, startTime, endTime) VALUE
 
 -- Insert weekly schedule for Mike Johnson (Barber ID 3)
 INSERT INTO schedule (barber_id, appointment_id, date, startTime, endTime) VALUES
-(3, 2, '2025-02-17', '09:00:00', '09:30:00'), -- Linked to Sarah's appointment
-(3, NULL, '2025-02-17', '09:30:00', '10:00:00'),
-(3, NULL, '2025-02-17', '10:00:00', '10:30:00'),
-(3, NULL, '2025-02-17', '10:30:00', '11:00:00'),
-(3, NULL, '2025-02-17', '11:00:00', '11:30:00'),
-(3, NULL, '2025-02-17', '11:30:00', '12:00:00'),
-(3, NULL, '2025-02-17', '12:30:00', '13:00:00'),
-(3, NULL, '2025-02-17', '13:00:00', '13:30:00'),
-(3, NULL, '2025-02-17', '13:30:00', '14:00:00'),
-(3, NULL, '2025-02-17', '14:00:00', '14:30:00'),
-(3, NULL, '2025-02-17', '14:30:00', '15:00:00'),
-(3, NULL, '2025-02-17', '15:00:00', '15:30:00'),
-(3, NULL, '2025-02-17', '15:30:00', '16:00:00'),
-(3, NULL, '2025-02-17', '16:00:00', '16:30:00'),
-(3, NULL, '2025-02-17', '16:30:00', '17:00:00');
+(2, 2, '2025-02-17', '09:00:00', '09:30:00'), -- Linked to Sarah's appointment
+(2, NULL, '2025-02-17', '09:30:00', '10:00:00'),
+(2, NULL, '2025-02-17', '10:00:00', '10:30:00'),
+(2, NULL, '2025-02-17', '10:30:00', '11:00:00'),
+(2, NULL, '2025-02-17', '11:00:00', '11:30:00'),
+(2, NULL, '2025-02-17', '11:30:00', '12:00:00'),
+(2, NULL, '2025-02-17', '12:30:00', '13:00:00'),
+(2, NULL, '2025-02-17', '13:00:00', '13:30:00'),
+(2, NULL, '2025-02-17', '13:30:00', '14:00:00'),
+(2, NULL, '2025-02-17', '14:00:00', '14:30:00'),
+(2, NULL, '2025-02-17', '14:30:00', '15:00:00'),
+(2, NULL, '2025-02-17', '15:00:00', '15:30:00'),
+(2, NULL, '2025-02-17', '15:30:00', '16:00:00'),
+(2, NULL, '2025-02-17', '16:00:00', '16:30:00'),
+(2, NULL, '2025-02-17', '16:30:00', '17:00:00');
