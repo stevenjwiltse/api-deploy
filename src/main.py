@@ -5,14 +5,12 @@ from fastapi import FastAPI, Depends, Form
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from core.db import sessionmanager
+from core.config import settings
 from routers.user_router import user_router
-<<<<<<< HEAD
 from auth.models import TokenResponse, UserInfo
 from auth.controller import AuthController
-=======
 from routers.barber_router import barber_router
 
->>>>>>> main
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -31,10 +29,7 @@ bearer_scheme = HTTPBearer()
 app.add_middleware(
     CORSMiddleware,
 
-    allow_origins=[
-        # Only localhost for now
-        "http://localhost:8000",
-    ],
+    allow_origins=[settings.get_config()["backend_cors_origins"]],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
