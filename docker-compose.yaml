@@ -8,13 +8,14 @@ services:
         env_file:
             - .env
         environment:
-            - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN_USERNAME}
-            - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+            - KC_BOOTSTRAP_ADMIN_USERNAME=${KEYCLOAK_ADMIN_USERNAME}
+            - KC_BOOTSTRAP_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
             - KEYCLOAK_API_SECRET=${KEYCLOAK_API_SECRET}
             - KEYCLOAK_FRONT_END_SECRET=${KEYCLOAK_FRONT_END_SECRET}
         volumes:
             - ./keycloak/realm-config.json:/opt/keycloak/data/import/realm-config.json
-        command: ["start-dev", "--import-realm"]
+            - ./keycloak/themes:/opt/keycloak/providers/
+        command: ["start-dev", "--import-realm", "--spi-theme-static-max-age=-1", "--spi-theme-cache-themes=false", "--spi-theme-cache-templates=false"]
 
     db:
         image: mysql:latest
@@ -53,17 +54,17 @@ services:
             - ./:/app
         env_file:
             - .env
-        environment:
-            - MYSQL_USER=${MYSQL_USER}
-            - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-            - MYSQL_DB=${MYSQL_DB}
-            - MYSQL_PORT=${MYSQL_PORT}
-            - MYSQL_HOST=db
-            - SECRET_KEY=${SECRET_KEY}
-            - DEBUG=${DEBUG}
-            - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
-            - FRONTEND_HOST=${FRONTEND_HOST}
         command: bash -c "pip install -r ../requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+
+    smtp:
+        image: gessnerfl/fake-smtp-server:latest
+        container_name: fake-smtp
+        env_file:
+            - .env
+        ports:
+        - "8125:8025" #expose smtp port
+        - "8180:8080" #expose web ui
+        - "8181:8081" #expose management api
 networks:
     barber-shop-network:
         external: true
