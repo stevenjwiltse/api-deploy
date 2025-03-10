@@ -11,6 +11,7 @@ from auth.controller import AuthController
 from routers.barber_router import barber_router
 from routers.service_router import service_router
 from routers.schedule_router import schedule_router
+from routers.appointment_router import appointment_router
 
 
 @asynccontextmanager
@@ -51,6 +52,9 @@ app.include_router(service_router)
 
 # Connect schedule_router
 app.include_router(schedule_router)
+
+# Connect appointment_router
+app.include_router(appointment_router)
 
 # Define the root endpoint
 @app.get("/")
