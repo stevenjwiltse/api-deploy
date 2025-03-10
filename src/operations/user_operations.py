@@ -90,18 +90,18 @@ class UserOperations:
 
     # Update user by their ID
     async def update_user(self, user_id: int, user_data) -> Optional[User]:
-        # if user_data.email:
-        #     existing_user_email = await self.db.execute(select(User).filter(User.email == user_data.email))
-        #     if existing_user_email.scalars().first():
-        #         raise HTTPException(status_code=400, detail="A user already exists with the provided email")
+        if user_data.email:
+            existing_user_email = await self.db.execute(select(User).filter(User.email == user_data.email))
+            if existing_user_email.scalars().first():
+                raise HTTPException(status_code=400, detail="A user already exists with the provided email")
 
-        # if user_data.phoneNumber:
-        #     existing_user_phone = await self.db.execute(select(User).filter(User.phoneNumber == user_data.phoneNumber))
-        #     if existing_user_phone.scalars().first():
-        #         raise HTTPException(status_code=400, detail="A user already exists with the provided phone number")
+        if user_data.phoneNumber:
+            existing_user_phone = await self.db.execute(select(User).filter(User.phoneNumber == user_data.phoneNumber))
+            if existing_user_phone.scalars().first():
+                raise HTTPException(status_code=400, detail="A user already exists with the provided phone number")
 
-        #     if len(user_data.phoneNumber) > 10:
-        #         raise HTTPException(status_code=400, detail="Phone number must be 10 digits or less")
+            if len(user_data.phoneNumber) > 10:
+                raise HTTPException(status_code=400, detail="Phone number must be 10 digits or less")
 
         try:
             result = await self.db.execute(select(User).filter(User.user_id == user_id))
