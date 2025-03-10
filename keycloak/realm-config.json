@@ -27,13 +27,13 @@
   "oauth2DevicePollingInterval": 5,
   "enabled": true,
   "sslRequired": "external",
-  "registrationAllowed": true,
+  "registrationAllowed": false,
   "registrationEmailAsUsername": false,
   "rememberMe": false,
   "verifyEmail": false,
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
-  "resetPasswordAllowed": false,
+  "resetPasswordAllowed": true,
   "editUsernameAllowed": false,
   "bruteForceProtected": false,
   "permanentLockout": false,
@@ -520,15 +520,11 @@
     "description": "",
     "composite": false,
     "clientRole": false,
-    "containerId": "64b2fbcd-54cc-4d80-8d66-e60aac44246f",
-    "attributes": {}
+    "containerId": "64b2fbcd-54cc-4d80-8d66-e60aac44246f"
   },
-
   "requiredCredentials": [
     "password"
   ],
-  
-  
   "otpPolicyType": "totp",
   "otpPolicyAlgorithm": "HmacSHA1",
   "otpPolicyInitialCounter": 0,
@@ -585,7 +581,8 @@
       "attributes": {
         "firstName": "admin",
         "lastName": "admin"
-      }
+      },
+      "emailVerified": true
     },
     {
       "username": "owner",
@@ -603,7 +600,8 @@
       "attributes": {
         "firstName": "John",
         "lastName": "Doe"
-      }
+      },
+      "emailVerified": true
     },
     {
       "username": "barber",
@@ -620,7 +618,8 @@
       "attributes": {
         "firstName": "Sara",
         "lastName": "Sanders"
-      }
+      },
+      "emailVerified": true
     },
     {
       "username": "client",
@@ -636,7 +635,8 @@
       "attributes": {
         "firstName": "Mary",
         "lastName": "Smith"
-      }
+      },
+      "emailVerified": true
     },
     {
       "id": "f1df5fa8-98be-4153-94c9-82a59b6d157e",
@@ -649,33 +649,11 @@
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "realmRoles": [
-        "default-roles-barbershop",
-        "client"
+        "client",
+        "default-roles-barbershop"
       ],
       "clientRoles": {
         "barbershop-api-client": [
-          "uma_protection"
-        ]
-      },
-      "notBefore": 0,
-      "groups": []
-    },
-    {
-      "id": "187fe627-363d-4c77-9f1f-d47ab83e2560",
-      "username": "service-account-barbershop-front-end-client",
-      "emailVerified": false,
-      "createdTimestamp": 1739821116967,
-      "enabled": true,
-      "totp": false,
-      "serviceAccountClientId": "barbershop-front-end-client",
-      "disableableCredentialTypes": [],
-      "requiredActions": [],
-      "realmRoles": [
-        "default-roles-barbershop",
-        "client"
-      ],
-      "clientRoles": {
-        "barbershop-front-end-client": [
           "uma_protection"
         ]
       },
@@ -924,7 +902,7 @@
     {
       "id": "3383a2cb-5649-4e8f-a85b-3c36e35b6547",
       "clientId": "barbershop-front-end-client",
-      "name": "",
+      "name": "Barbershop UI",
       "description": "",
       "rootUrl": "",
       "adminUrl": "",
@@ -933,22 +911,22 @@
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "secret": "${KEYCLOAK_FRONT_END_SECRET}",
       "redirectUris": [
-        "/*"
+        "http://localhost:5173/*",
+        "http://localhost:5173"
       ],
       "webOrigins": [
-        "/*"
+        "http://localhost:5173/*",
+        "http://localhost:5173"
       ],
       "notBefore": 0,
       "bearerOnly": false,
       "consentRequired": false,
       "standardFlowEnabled": true,
-      "implicitFlowEnabled": true,
+      "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": true,
-      "serviceAccountsEnabled": true,
-      "authorizationServicesEnabled": true,
-      "publicClient": false,
+      "serviceAccountsEnabled": false,
+      "publicClient": true,
       "frontchannelLogout": true,
       "protocol": "openid-connect",
       "attributes": {
@@ -957,7 +935,9 @@
         "client.secret.creation.time": "1739821116",
         "backchannel.logout.session.required": "true",
         "post.logout.redirect.uris": "+",
+        "frontchannel.logout.session.required": "true",
         "oauth2.device.authorization.grant.enabled": "false",
+        "display.on.consent.screen": "false",
         "backchannel.logout.revoke.offline.tokens": "false"
       },
       "authenticationFlowBindingOverrides": {},
@@ -965,7 +945,6 @@
       "nodeReRegistrationTimeout": -1,
       "defaultClientScopes": [
         "web-origins",
-        "service_account",
         "acr",
         "roles",
         "profile",
@@ -978,15 +957,7 @@
         "offline_access",
         "organization",
         "microprofile-jwt"
-      ],
-      "authorizationSettings": {
-        "allowRemoteResourceManagement": true,
-        "policyEnforcementMode": "ENFORCING",
-        "resources": [],
-        "policies": [],
-        "scopes": [],
-        "decisionStrategy": "UNANIMOUS"
-      }
+      ]
     },
     {
       "id": "aba7c8f7-c1bb-40d0-9521-6e5108e88999",
@@ -1858,7 +1829,24 @@
     "xXSSProtection": "1; mode=block",
     "strictTransportSecurity": "max-age=31536000; includeSubDomains"
   },
-  "smtpServer": {},
+  "smtpServer": {
+    "replyToDisplayName" : "",
+    "starttls" : "false",
+    "auth" : "true",
+    "envelopeFrom" : "",
+    "ssl" : "false",
+    "password" : "password",
+    "port" : "8025",
+    "host" : "fake-smtp",
+    "replyTo" : "",
+    "from" : "admin@local.host",
+    "fromDisplayName" : "Barbershop Admin",
+    "user" : "admin"
+  },
+  "loginTheme": "barbershop-theme",
+  "accountTheme": "",
+  "adminTheme": "",
+  "emailTheme": "",
   "eventsEnabled": false,
   "eventsListeners": [
     "jboss-logging"
@@ -1866,7 +1854,27 @@
   "enabledEventTypes": [],
   "adminEventsEnabled": false,
   "adminEventsDetailsEnabled": false,
-  "identityProviders": [],
+  "identityProviders": [
+    {
+      "alias": "google",
+      "displayName": "",
+      "internalId": "fb4e4a52-53c4-46d0-b993-b97aacc2844f",
+      "providerId": "google",
+      "enabled": true,
+      "updateProfileFirstLoginMode": "on",
+      "trustEmail": false,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "authenticateByDefault": false,
+      "linkOnly": false,
+      "hideOnLogin": false,
+      "config": {
+        "syncMode": "LEGACY",
+        "clientSecret": "${GOOGLE_CLIENT_SECRET}",
+        "clientId": "895544776568-5r1p200dsu7oc7smueedlk43gv44tj9i.apps.googleusercontent.com"
+      }
+    }
+  ],
   "identityProviderMappers": [],
   "components": {
     "org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy": [
@@ -1878,14 +1886,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
-            "saml-user-property-mapper",
-            "saml-user-attribute-mapper",
-            "oidc-usermodel-property-mapper",
-            "oidc-usermodel-attribute-mapper",
-            "oidc-address-mapper",
             "saml-role-list-mapper",
+            "saml-user-property-mapper",
+            "oidc-usermodel-attribute-mapper",
+            "oidc-usermodel-property-mapper",
+            "oidc-sha256-pairwise-sub-mapper",
+            "saml-user-attribute-mapper",
             "oidc-full-name-mapper",
-            "oidc-sha256-pairwise-sub-mapper"
+            "oidc-address-mapper"
           ]
         }
       },
@@ -1940,13 +1948,13 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
-            "oidc-usermodel-attribute-mapper",
-            "saml-role-list-mapper",
-            "saml-user-attribute-mapper",
-            "oidc-address-mapper",
             "oidc-full-name-mapper",
-            "oidc-sha256-pairwise-sub-mapper",
             "oidc-usermodel-property-mapper",
+            "oidc-address-mapper",
+            "saml-role-list-mapper",
+            "oidc-usermodel-attribute-mapper",
+            "oidc-sha256-pairwise-sub-mapper",
+            "saml-user-attribute-mapper",
             "saml-user-property-mapper"
           ]
         }
@@ -2763,21 +2771,24 @@
   "firstBrokerLoginFlow": "first broker login",
   "attributes": {
     "cibaBackchannelTokenDeliveryMode": "poll",
-    "cibaExpiresIn": "120",
     "cibaAuthRequestedUserHint": "login_hint",
-    "oauth2DeviceCodeLifespan": "600",
     "clientOfflineSessionMaxLifespan": "0",
     "oauth2DevicePollingInterval": "5",
     "clientSessionIdleTimeout": "0",
-    "parRequestUriLifespan": "60",
-    "clientSessionMaxLifespan": "0",
     "clientOfflineSessionIdleTimeout": "0",
     "cibaInterval": "5",
-    "realmReusableOtpCode": "false"
+    "realmReusableOtpCode": "false",
+    "cibaExpiresIn": "120",
+    "oauth2DeviceCodeLifespan": "600",
+    "parRequestUriLifespan": "60",
+    "clientSessionMaxLifespan": "0",
+    "darkMode": "true"
   },
-  "keycloakVersion": "26.0.8",
+  "keycloakVersion": "26.1.3",
   "userManagedAccessAllowed": false,
   "organizationsEnabled": false,
+  "verifiableCredentialsEnabled": false,
+  "adminPermissionsEnabled": false,
   "clientProfiles": {
     "profiles": []
   },

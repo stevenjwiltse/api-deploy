@@ -24,7 +24,7 @@ class ScheduleOperations:
             return new_schedule
         except SQLAlchemyError:
             raise HTTPException(
-                status_code=400,
+                status_code=500,
                 detail="An unexpected error occurred during schedule block creation"
             )
         
@@ -35,7 +35,7 @@ class ScheduleOperations:
             return result.scalars().all()
         except SQLAlchemyError:
             raise HTTPException(
-                status_code=400,
+                status_code=500,
                 detail="An unexpected error occurred while fetching schedule blocks"
             )
         
@@ -46,7 +46,7 @@ class ScheduleOperations:
             return result.scalars().first()
         except SQLAlchemyError:
             raise HTTPException(
-                status_code=400,
+                status_code=500,
                 detail="An unexpected error occurred while fetching the schedule block"
             )
         
@@ -66,7 +66,7 @@ class ScheduleOperations:
             return schedule
         except SQLAlchemyError:
             raise HTTPException(
-                status_code=400,
+                status_code=500,
                 detail="An unexpected error occurred while updating the desired schedule block"
             )
         
@@ -82,6 +82,6 @@ class ScheduleOperations:
             return True
         except SQLAlchemyError:
             raise HTTPException(
-                status_code=400,
+                status_code=500,
                 detail="An unexpected error occurred while deleting the desired schedule block"
             )
