@@ -24,8 +24,12 @@ class AppointmentUpdate(BaseModel):
     schedule_id: Optional[int] = None
     status: Optional[AppointmentStatus] = None
 
-class AppointmentResponse(AppointmentCreate):
+class AppointmentResponse(BaseModel):
     appointment_id: int
+    user_id: int
+    barber_id: int
+    status: AppointmentStatus 
+
 
     class Config:
         from_attributes = True

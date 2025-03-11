@@ -4,6 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from modules.user.models import Appointment, User, Barber, Schedule
 from typing import List, Optional
 from fastapi import HTTPException
+from modules.appointment_schema import AppointmentCreate, AppointmentResponse
 
 
 '''
@@ -15,7 +16,7 @@ class AppointmentOperations:
         self.db = db
 
     #create a new appointment
-    async def create_appointment(self, appointment_data) -> Appointment:
+    async def create_appointment(self, appointment_data: AppointmentCreate) -> AppointmentResponse:
         try:
 
             #check if user_id exists in user table
@@ -62,13 +63,16 @@ class AppointmentOperations:
             schedule.appointment_id = new_appointment.appointment_id
             await self.db.commit()
 
-            return {
-                "appointment_id": new_appointment.appointment_id,
-                "user_id": new_appointment.user_id,
-                "barber_id": new_appointment.barber_id,
-                "schedule_id": appointment_data.schedule_id,
-                "status": new_appointment.status
-            }
+            # Refresh appointment again to ensure the session is aware of its latest state
+            await self.db.refresh(new_appointment)
+
+            # Return the appointment response
+            return AppointmentResponse(
+                appointment_id=new_appointment.appointment_id,
+                user_id=new_appointment.user_id,
+                barber_id=new_appointment.barber_id,
+                status=new_appointment.status
+            )
         
         except SQLAlchemyError:
             raise HTTPException(
