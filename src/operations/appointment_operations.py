@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
-from modules.user.models import Appointment, User, Barber
+from modules.user.models import Appointment, User, Barber, Schedule
 from typing import List, Optional
 from fastapi import HTTPException
 
@@ -37,13 +37,38 @@ class AppointmentOperations:
                     status_code=400,
                     detail="Invalid barber_id: Barber does not exist"
                 )
+            
+            #check if schedule_id exists in the Schedule table
+            schedule_result = await self.db.execute(select(Schedule).filter(Schedule.schedule_id == appointment_data.schedule_id))
+            schedule = schedule_result.scalars().first()
+
+            if not schedule:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid schedule_id: Schedule block does not exist"
+                )
 
             #create new appointment if both exist
-            new_appointment = Appointment(**appointment_data.dict())
+            new_appointment = Appointment(
+                user_id=appointment_data.user_id,
+                barber_id=appointment_data.barber_id,
+                status=appointment_data.status
+            )
             self.db.add(new_appointment)
             await self.db.commit()
             await self.db.refresh(new_appointment)
-            return new_appointment
+
+            #Update the schedule block with the newly created appointment_id
+            schedule.appointment_id = new_appointment.appointment_id
+            await self.db.commit()
+
+            return {
+                "appointment_id": new_appointment.appointment_id,
+                "user_id": new_appointment.user_id,
+                "barber_id": new_appointment.barber_id,
+                "schedule_id": appointment_data.schedule_id,
+                "status": new_appointment.status
+            }
         
         except SQLAlchemyError:
             raise HTTPException(
