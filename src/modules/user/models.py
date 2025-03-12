@@ -146,7 +146,7 @@ class Schedule(Base):
     
     schedule_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     barber_id: Mapped[int] = mapped_column(ForeignKey("barber.barber_id", ondelete="CASCADE"), nullable=False)
-    appointment_id: Mapped[int] = mapped_column(ForeignKey("appointment.appointment_id", ondelete="SET NULL"))
+    appointment_id: Mapped[int] = mapped_column(ForeignKey("appointment.appointment_id", ondelete="CASCADE"), nullable=False)
     date: Mapped[str] = mapped_column(String(10), nullable=False)
     startTime: Mapped[Time] = mapped_column(Time, nullable=False)
     endTime: Mapped[Time] = mapped_column(Time, nullable=False)
