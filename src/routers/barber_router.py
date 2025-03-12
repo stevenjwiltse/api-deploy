@@ -4,17 +4,22 @@ from operations.barber_operations import BarberOperations
 from core.dependencies import DBSessionDep
 from modules.user.barber_schema import BarberResponse, BarberBase
 from typing import List
-from auth.service import AuthService
+from auth.controller import AuthController
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 barber_router = APIRouter(
     prefix="/api/v1/barbers",
     tags=["barbers"],
-    dependencies=[Depends(AuthService.has_role('barber'))],
 )
+# Initialize the HTTPBearer scheme for authentication
+bearer_scheme = HTTPBearer()
 
 # POST endpoint to create a barber for an existing user by user_id
 @barber_router.post("", response_model=BarberResponse)
-async def create_barber(user: BarberBase, db_session: DBSessionDep):
+async def create_barber(user: BarberBase, db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+    # Checks for barber role
+    AuthController.protected_endpoint(credentials, required_role="barber")
+    
     barber_ops = BarberOperations(db_session)
     response = await barber_ops.create_barber(user)
 
@@ -22,7 +27,8 @@ async def create_barber(user: BarberBase, db_session: DBSessionDep):
 
 # GET endpoint to retrieve all barbers
 @barber_router.get("", response_model=List[BarberResponse])
-async def get_all_barbers(db_session: DBSessionDep):
+async def get_all_barbers(db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+
     barber_ops = BarberOperations(db_session)
     response = await barber_ops.get_all_barbers()
 

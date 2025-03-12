@@ -12,23 +12,6 @@ class AuthController:
     Controller for handling authentication logic.
     """
 
-    @staticmethod
-    def read_root():
-        """
-        Root endpoint providing basic information and documentation link.
-
-        Returns:
-            dict: A welcome message and link to the documentation.
-        """
-        return {
-            "message": (
-                "Welcome to the Keycloak authentication system. "
-                "Use the /login endpoint to authenticate and /protected to access the protected resource."
-            ),
-            "documentation": "/docs",
-        }
-
-    @staticmethod
     def login(username: str = Form(...), password: str = Form(...)) -> TokenResponse:
         """
         Authenticate user and return access token.
@@ -54,7 +37,6 @@ class AuthController:
 
         return TokenResponse(access_token=access_token)
 
-    @staticmethod
     def protected_endpoint(
         credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
         required_role: str = None  # Optional parameter to enforce role-based access

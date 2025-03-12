@@ -6,8 +6,10 @@ from keycloak import KeycloakOpenID, KeycloakOpenIDConnection, KeycloakAdmin
 from modules.user.user_schema import UserCreate, UserUpdate
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
+bearer_scheme = HTTPBearer()
 
 class AuthService():
+
     # Keycloak connection using credentials from core/config/settings
     keycloak_openid = KeycloakOpenID(
         server_url=settings.get_config()["keycloak_server_url"],
@@ -30,7 +32,6 @@ class AuthService():
 
 
     # Checks username and password against Keycloak DB and return JWT
-    @staticmethod
     def authenticate_user(username: str, password: str) -> str:
         """
         Authenticate the user using Keycloak and return an access token.
@@ -45,7 +46,6 @@ class AuthService():
             )
 
     # Verifies token against Keycloak and UserInfo model and returns user info
-    @staticmethod
     def verify_token(token: str) -> UserInfo:
         """
         Verify the given token and return user information.
@@ -80,7 +80,6 @@ class AuthService():
             )
         
     # Register a new user in Keycloak
-    @staticmethod
     def register_kc_user(user: UserCreate):
         """
         Register a new user in Keycloak.
@@ -105,7 +104,7 @@ class AuthService():
             )
         
 
-    @staticmethod
+
     def update_kc_user(user: UserUpdate):
         
         user_representation = {
@@ -125,7 +124,7 @@ class AuthService():
             )
         
 
-    @staticmethod
+
     def delete_kc_user(user_email):
         try:
             user_id = AuthService.keycloak_admin.get_user_id(username=user_email)
@@ -136,18 +135,16 @@ class AuthService():
                 status_code=500, detail=f"Error deleting user: {str(e)}"
             )
         
-    
-    @staticmethod
-    def has_role(required_role: str):
-        bearer_scheme = HTTPBearer()
-        def role_dependency(credentials: HTTPAuthorizationCredentials = Security(bearer_scheme)):
-            token = credentials.credentials
-            user_info = AuthService.verify_token(token)
 
-            if required_role and required_role not in user_info.roles:
-                raise HTTPException(
-                    status_code=403,
-                    detail=f"Access forbidden: Requires '{required_role}' role"
-                )
-            return user_info
-        return role_dependency
+
+    def get_current_user(credentials: HTTPAuthorizationCredentials = Security(bearer_scheme)) -> UserInfo:
+        """Extract and verify the token to retrieve user info."""
+        token = credentials.credentials
+        user_info = AuthService.verify_token(token)
+
+        if not user_info:
+            raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+        return user_info
+
+
