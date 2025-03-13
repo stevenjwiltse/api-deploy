@@ -8,6 +8,7 @@ from modules.schedule_schema import ScheduleResponse, ScheduleCreate, ScheduleUp
 from auth.controller import AuthController
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import logging
+from modules.user.error_response_schema import ErrorResponse
 
 '''
 Endpoints for interactions with schedule table
@@ -21,25 +22,32 @@ schedule_router = APIRouter(
 bearer_scheme = HTTPBearer()
 
 # POST endpoint to create a new schedule block in the database
-@schedule_router.post("", response_model=ScheduleResponse)
+@schedule_router.post("", response_model=ScheduleResponse, responses = {
+    500: {"model": ErrorResponse}
+})
 async def create_schedule(schedule: ScheduleCreate, db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
     
     schedule_ops = ScheduleOperations(db_session)
     created_schedule = await schedule_ops.create_schedule(schedule)
     if not created_schedule:
-        raise HTTPException(status_code=400, detail="Schedule creation failed")
+        raise HTTPException(status_code=500, detail="Schedule creation failed")
     
     return created_schedule
 
 # GET endpoint to get all schedule blocks from the database
-@schedule_router.get("", response_model=List[ScheduleResponse])
+@schedule_router.get("", response_model=List[ScheduleResponse], responses = {
+    500: {"model": ErrorResponse}
+})
 async def get_schedules(db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
 
     schedule_ops = ScheduleOperations(db_session)
     return await schedule_ops.get_all_schedules()
 
 # GET endpoint to retrieve a specific schedule block from the database by the schedule_id
-@schedule_router.get("/{schedule_id}", response_model=ScheduleResponse)
+@schedule_router.get("/{schedule_id}", response_model=ScheduleResponse, responses = {
+    404: {"model": ErrorResponse},
+    500: {"model": ErrorResponse}
+})
 async def get_schedule(schedule_id: int, db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
     
     schedule_ops = ScheduleOperations(db_session)
@@ -49,7 +57,10 @@ async def get_schedule(schedule_id: int, db_session: DBSessionDep, credentials: 
     return schedule
 
 # PUT endpoint to update a specific schedule block in the database by the schedule_id
-@schedule_router.put("/{schedule_id}", response_model=ScheduleResponse)
+@schedule_router.put("/{schedule_id}", response_model=ScheduleResponse, responses = {
+    404: {"model": ErrorResponse},
+    500: {"model": ErrorResponse}
+})
 async def update_schedule(schedule_id: int, schedule: ScheduleUpdate, db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
     
     schedule_ops = ScheduleOperations(db_session)
@@ -59,7 +70,10 @@ async def update_schedule(schedule_id: int, schedule: ScheduleUpdate, db_session
     return updated_schedule
 
 # DELETE endpoint to delete a schedule block from the database by the schedule_id
-@schedule_router.delete("/{schedule_id}", response_model=dict)
+@schedule_router.delete("/{schedule_id}", response_model=dict, responses = {
+    404: {"model": ErrorResponse},
+    500: {"model": ErrorResponse}
+})
 async def delete_schedule(schedule_id: int, db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
     
     schedule_ops = ScheduleOperations(db_session)

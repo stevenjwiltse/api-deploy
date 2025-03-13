@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from core.dependencies import DBSessionDep
 from modules.user.service_schema import ServiceBase, ServiceResponse, ServiceUpdate
 from operations.service_operations import ServiceOperations
+from modules.user.error_response_schema import ErrorResponse
 from auth.controller import AuthController
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
@@ -15,7 +16,9 @@ service_router = APIRouter(
 bearer_scheme = HTTPBearer()
 
 # POST endpoint to create a service
-@service_router.post("", response_model=ServiceResponse)
+@service_router.post("", response_model=ServiceResponse, responses = {
+    500: {"model": ErrorResponse}
+})
 async def create_service(service: ServiceBase, db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
     # Checks for barber role
     AuthController.protected_endpoint(credentials, required_role="barber")
@@ -27,7 +30,9 @@ async def create_service(service: ServiceBase, db_session: DBSessionDep, credent
 
 
 # GET endpoint to get all available services
-@service_router.get("", response_model=List[ServiceResponse])
+@service_router.get("", response_model=List[ServiceResponse], responses = {
+    500: {"model": ErrorResponse}
+})
 async def get_all_services(db_session: DBSessionDep):
     service_ops = ServiceOperations(db_session)
     response = await service_ops.get_all_services()
@@ -35,7 +40,10 @@ async def get_all_services(db_session: DBSessionDep):
     return response
 
 # PUT endpoint to update a service
-@service_router.put("/{service_id}", response_model=ServiceResponse)
+@service_router.put("/{service_id}", response_model=ServiceResponse, responses = {
+    400: {"model": ErrorResponse},
+    500: {"model": ErrorResponse}
+})
 async def update_service(db_session: DBSessionDep, service_id: int, service_details: ServiceUpdate, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
     # Checks for barber role
     AuthController.protected_endpoint(credentials, required_role="barber")
@@ -46,7 +54,10 @@ async def update_service(db_session: DBSessionDep, service_id: int, service_deta
     return response
 
 # DELETE endpoint to delete a service
-@service_router.delete("/{service_id}", response_model=dict)
+@service_router.delete("/{service_id}", response_model=dict, responses = {
+    400: {"model": ErrorResponse},
+    500: {"model": ErrorResponse}
+})
 async def delete_service(db_session: DBSessionDep, service_id: int, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
     # Checks for barber role
     AuthController.protected_endpoint(credentials, required_role="barber")

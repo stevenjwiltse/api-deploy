@@ -92,6 +92,7 @@ class AuthService():
             "lastName": user.lastName,
             "enabled": True,
             "credentials": [{"type": "password", "value": user.password, "temporary": False}],
+            "requiredActions": ["VERIFY_EMAIL"]
         }
 
 
