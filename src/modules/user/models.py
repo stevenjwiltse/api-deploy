@@ -16,7 +16,9 @@ from sqlalchemy import (
     DateTime,
     Integer,
     Enum,
-    Text
+    Text,
+    Date,
+    UniqueConstraint
 )
 
 from sqlalchemy.sql import func
@@ -104,8 +106,8 @@ class Appointment(Base):
     # An Appointment can have multiple AppointmentService records ()
     services: Mapped[list["AppointmentService"]] = relationship(back_populates="appointment")
 
-    # One-to-Many - Appointment can have more than one schedule
-    schedule: Mapped[list["Schedule"]] = relationship(back_populates="appointment")
+     # Relationship to Appointment_TimeSlot (creates Many-to-Many with TimeSlot)
+    appointment_time_slots: Mapped[list["Appointment_TimeSlot"]] = relationship("Appointment_TimeSlot", back_populates="appointment")
 
 
 class Service(Base):
@@ -145,32 +147,68 @@ class Schedule(Base):
     __tablename__ = "schedule"
     
     schedule_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    barber_id: Mapped[int] = mapped_column(ForeignKey("barber.barber_id", ondelete="CASCADE"), nullable=False)
-    appointment_id: Mapped[int] = mapped_column(ForeignKey("appointment.appointment_id", ondelete="CASCADE"), nullable=False)
-    date: Mapped[str] = mapped_column(String(10), nullable=False)
-    startTime: Mapped[Time] = mapped_column(Time, nullable=False)
-    endTime: Mapped[Time] = mapped_column(Time, nullable=False)
+    barber_id: Mapped[int] = mapped_column(ForeignKey("barber.barber_id", on_delete="CASCADE"), nullable=False)
+    date: Mapped[Date] = mapped_column(Date, nullable=False)
+    is_working: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    # Unique constraint: A barber can have only one schedule per date
+    __table_args__ = (UniqueConstraint("barber_id", "date", name="uq_barber_date"),)
     
     '''
     Schedule class relationships
     '''
-
     # Each schedule is assigned to a single Barber (Many-to-One)
     barber: Mapped["Barber"] = relationship(back_populates="schedules")
 
-    # Each schedule links to one appointment (Many-to-One)
-    appointment: Mapped["Appointment"] = relationship(back_populates="schedule")
+    # Each schedule links to multiple time slots (One-to-Many)
+    time_slots: Mapped[list["TimeSlot"]] = relationship("TimeSlot", back_populates="schedule", cascade="all, delete-orphan")
+
+class TimeSlot(Base):
+    __tablename__ = "time_slots"
+
+    slot_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    schedule_id: Mapped[int] = mapped_column(ForeignKey("schedule.schedule_id", ondelete="CASCADE"), nullable=False)
+    start_time: Mapped[Time] = mapped_column(Time, nullable=False)
+    end_time: Mapped[Time] = mapped_column(Time, nullable=False)
+    is_available: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    __table_args__ = (UniqueConstraint("schedule_id", "start_time", "end_time", name="uq_schedule_time"),)
+
+    '''
+    TimeSlot class relationships
+    '''
+    #Multiple time slots link to one schedule (Many-to-One)
+    schedule: Mapped["Schedule"] = relationship("Schedule", back_populates="time_slots")
+
+    #Relationship to Appointment_TimeSlot (creates Many-to-Many with appointment)
+    appointment_time_slots: Mapped[list["Appointment_TimeSlot"]] = relationship("Appointment_TimeSlot", back_populates="time_slot")
+
+
+class Appointment_TimeSlot(Base):
+    __tablename__ = "appointment_time_slots"
+
+    slot_id: Mapped[int] = mapped_column(Integer, ForeignKey("time_slots.slot_id", ondelete="CASCADE"), primary_key=True)
+    appointment_id: Mapped[int] = mapped_column(Integer, ForeignKey("appointment.appointment_id", ondelete="CASCADE"), primary_key=True)
+
+    '''
+    Appointment_TimeSlot class relationships
+    '''
+    # Each Appointment_TimeSlot is linked to one TimeSlot
+    time_slot: Mapped["TimeSlot"] = relationship(back_populates="appointment_time_slots")
+
+    # Each Appointment_TimeSlot is linked to one TimeSlot
+    appointment: Mapped["Appointment"] = relationship(back_populates="appointment_time_slots")
 
 class Thread(Base):
     __tablename__ = "thread"
     
-    '''
-    Thread class relationships
-    '''
     thread_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     receivingUser: Mapped[int] = mapped_column(ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False)
     sendingUser: Mapped[int] = mapped_column(ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False)
-    
+
+    '''
+    Thread class relationships
+    '''
     # Each thread has one recieving User (Many-to-One)
     receiving_user: Mapped["User"] = relationship(foreign_keys=[receivingUser], back_populates="received_threads")
 
@@ -189,7 +227,7 @@ class Message(Base):
 
     message_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     thread_id: Mapped[int] = mapped_column(ForeignKey("thread.thread_id", ondelete="CASCADE"), nullable=False)
-    hasActiveMessage: Mapped[bool] = mapped_column(Boolean)
+    hasActiveMessage: Mapped[bool] = mapped_column(Boolean, default=True)
     text: Mapped[str] = mapped_column(Text, nullable=False)
     timeStamp: Mapped[DateTime] = mapped_column(DateTime, default=func.current_timestamp())
     
