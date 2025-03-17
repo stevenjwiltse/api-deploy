@@ -60,7 +60,7 @@ class User(Base):
     sent_threads: Mapped[list["Thread"]] = relationship(foreign_keys="Thread.sendingUser", back_populates="sending_user")
 
     # User can receive many Threads (One-To-Many)
-    received_threads: Mapped[list["Thread"]] = relationship(foreign_keys="Thread.receivingUser", back_populates="receiving_user")
+    received_threads: Mapped[list["Thread"]] = relationship(foreign_keys="Thread.recievingUser", back_populates="receiving_user")
 
 
 class Barber(Base):
@@ -168,11 +168,11 @@ class Thread(Base):
     Thread class relationships
     '''
     thread_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    receivingUser: Mapped[int] = mapped_column(ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False)
+    recievingUser: Mapped[int] = mapped_column(ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False)
     sendingUser: Mapped[int] = mapped_column(ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False)
     
     # Each thread has one recieving User (Many-to-One)
-    receiving_user: Mapped["User"] = relationship(foreign_keys=[receivingUser], back_populates="received_threads")
+    receiving_user: Mapped["User"] = relationship(foreign_keys=[recievingUser], back_populates="received_threads")
 
     # Each thread has one sender (Many-to-One)
     sending_user: Mapped["User"] = relationship(foreign_keys=[sendingUser], back_populates="sent_threads")

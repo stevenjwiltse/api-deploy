@@ -13,6 +13,8 @@ from routers.barber_router import barber_router
 from routers.service_router import service_router
 from routers.schedule_router import schedule_router
 from routers.appointment_router import appointment_router
+from routers.thread_router import thread_router
+from routers.message_router import message_router
 
 
 @asynccontextmanager
@@ -39,20 +41,14 @@ app.add_middleware(
 )
 
 
-# Connect user_router
+# Connect routers
 app.include_router(user_router)
-
-# Connect barber_router
 app.include_router(barber_router)
-
-# Connect service_router
 app.include_router(service_router)
-
-# Connect schedule_router
 app.include_router(schedule_router)
-
-# Connect appointment_router
 app.include_router(appointment_router)
+app.include_router(thread_router)
+app.include_router(message_router)
 
 # Define the root endpoint
 @app.get("/")
