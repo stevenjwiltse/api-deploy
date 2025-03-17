@@ -5,7 +5,8 @@ from core.db import get_db_session
 from core.dependencies import DBSessionDep
 from operations.user_operations import UserOperations
 from modules.user.user_schema import UserResponse, UserCreate, UserBase, UserUpdate
-from auth.service import AuthService
+from auth.controller import AuthController
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import logging
 from modules.user.error_response_schema import ErrorResponse
 '''
@@ -16,6 +17,8 @@ user_router = APIRouter(
     prefix="/api/v1/users",
     tags=["users"],
 )
+# Initialize the HTTPBearer scheme for authentication
+bearer_scheme = HTTPBearer()
 
 # POST endpoint to create a new user in the database
 @user_router.post("", response_model=UserResponse, responses = {
@@ -30,18 +33,15 @@ async def create_user(user: UserCreate, db_session: DBSessionDep):
     if not created_user:
         raise HTTPException(status_code=400, detail="User creation failed")
     
-    # Creates a Keycloak user 
-    created_kc_user = AuthService.register_kc_user(user)
-    if not created_kc_user:
-        raise HTTPException(status_code=400, detail=f"Keycloak user creation has failed")
-    
     return created_user
 
 # GET endpoint to get all users from the database
 @user_router.get("", response_model=List[UserResponse], responses = {
     500: {"model": ErrorResponse}
 })
-async def get_users(db_session: DBSessionDep):
+async def get_users(db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+    AuthController.protected_endpoint(credentials, required_role="barber")
+    
     user_ops = UserOperations(db_session)
     return await user_ops.get_all_users()
 
@@ -50,7 +50,8 @@ async def get_users(db_session: DBSessionDep):
      400: {"model": ErrorResponse},
      500: {"model": ErrorResponse}
 })
-async def get_user(user_id: int, db_session: DBSessionDep):
+async def get_user(user_id: int, db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+    
     user_ops = UserOperations(db_session)
     user = await user_ops.get_user_by_id(user_id)
     if not user:
@@ -62,7 +63,8 @@ async def get_user(user_id: int, db_session: DBSessionDep):
     400: {"model": ErrorResponse},
     500: {"model": ErrorResponse}
 })
-async def update_user(user_id: int, user: UserUpdate, db_session: DBSessionDep):
+async def update_user(user_id: int, user: UserUpdate, db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+    
     user_ops = UserOperations(db_session)
     updated_user = await user_ops.update_user(user_id, user)
     if not updated_user:
@@ -74,7 +76,8 @@ async def update_user(user_id: int, user: UserUpdate, db_session: DBSessionDep):
     404: {"model": ErrorResponse},
     500: {"model": ErrorResponse}
 })
-async def delete_user(user_id: int, db_session: DBSessionDep):
+async def delete_user(user_id: int, db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+    
     user_ops = UserOperations(db_session)
     success = await user_ops.delete_user(user_id)
     if not success:
