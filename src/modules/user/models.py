@@ -147,7 +147,7 @@ class Schedule(Base):
     __tablename__ = "schedule"
     
     schedule_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    barber_id: Mapped[int] = mapped_column(ForeignKey("barber.barber_id", on_delete="CASCADE"), nullable=False)
+    barber_id: Mapped[int] = mapped_column(ForeignKey("barber.barber_id", ondelete="CASCADE"), nullable=False)
     date: Mapped[Date] = mapped_column(Date, nullable=False)
     is_working: Mapped[bool] = mapped_column(Boolean, default=True)
 

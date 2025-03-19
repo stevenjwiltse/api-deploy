@@ -114,23 +114,3 @@ def get_db_session():
     with session_manager.session() as session:
         yield session
 
-async def db_init() -> None:
-    with async_session_manager.session() as session:
-        # Populate the database with initial data
-
-        # Users
-        from routers.user_router import create_user
-        from modules.user.user_schema import UserCreate
-
-        users = [
-            {
-                "firstName": "John",
-                "lastName": "Doe",
-                "email": "john.doe@example.com",
-                "phoneNumber": "1234567890",
-                "password": "password",
-                "is_admin": True,
-            }
-        ]
-        for user in users:
-            await create_user(user=UserCreate(**user), db_session=session)
