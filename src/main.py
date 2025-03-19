@@ -13,7 +13,7 @@ from routers.service_router import service_router
 from routers.schedule_router import schedule_router
 from routers.auth_router import auth_router
 from routers.appointment_router import appointment_router
-
+from routers.email_router import email_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -40,6 +40,9 @@ app.add_middleware(
 
 # Connect auth_router
 app.include_router(auth_router)
+
+# Connect email_router
+app.include_router(email_router)
 
 # Connect user_router
 app.include_router(user_router)
