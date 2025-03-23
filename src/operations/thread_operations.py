@@ -28,7 +28,7 @@ class ThreadOperations:
             if not existing_user_one_result:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"No user found with ID: {thread.receiving_user}"
+                    detail=f"No user found with ID: {thread.receivingUser}"
                 )
             
             existing_user_two = await self.db.execute(select(User).filter(User.user_id == thread.sendingUser))
@@ -37,13 +37,13 @@ class ThreadOperations:
             if not existing_user_two_result:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"No user found with ID: {thread.sending_user}"
+                    detail=f"No user found with ID: {thread.sendingUser}"
                 )
             
             # Create, commit, and return the thread
 
             new_thread = Thread(
-                recievingUser=thread.receivingUser,
+                receivingUser=thread.receivingUser,
                 sendingUser=thread.sendingUser,
             )
             self.db.add(new_thread)
@@ -96,8 +96,8 @@ class ThreadOperations:
             threads = await self.db.execute(
             select(Thread).filter(
                     (
-                        (Thread.recievingUser == logged_user_id) & (Thread.sendingUser == other_user_id) |
-                        (Thread.recievingUser == other_user_id) & (Thread.sendingUser == logged_user_id)
+                        (Thread.receivingUser == logged_user_id) & (Thread.sendingUser == other_user_id) |
+                        (Thread.receivingUser == other_user_id) & (Thread.sendingUser == logged_user_id)
                     )
                 )
             )
@@ -120,7 +120,7 @@ class ThreadOperations:
 
                 thread_response = ThreadResponse(
                     thread_id=thread.thread_id,
-                    receivingUser=thread.recievingUser,
+                    receivingUser=thread.receivingUser,
                     sendingUser=thread.sendingUser,
                     messages=[MessageResponse.model_validate(message) for message in messages_results]
                 )
@@ -150,7 +150,7 @@ class ThreadOperations:
                 )
             
             threads = await self.db.execute(select(Thread).filter(
-                (Thread.recievingUser == user_id) | (Thread.sendingUser == user_id)
+                (Thread.receivingUser == user_id) | (Thread.sendingUser == user_id)
             ))
 
             thread_results = threads.scalars().all()
@@ -169,7 +169,7 @@ class ThreadOperations:
 
                 thread_response = ThreadResponse(
                     thread_id=thread.thread_id,
-                    receivingUser=thread.recievingUser,
+                    receivingUser=thread.receivingUser,
                     sendingUser=thread.sendingUser,
                     messages=[MessageResponse.model_validate(message) for message in messages_results]
                 )

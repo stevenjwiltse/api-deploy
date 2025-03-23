@@ -49,41 +49,6 @@ class MessageOperations:
                 detail="An unexpected error occurred during message creation"
             )
     
-    # Delete a message
-    async def delete_message(self, message_id: int) -> bool:
-        try:
-            # Ensure message exists before deletion
-            message = await self.db.execute(select(Message).filter(Message.message_id == message_id))
-            message_result = message.scalars().first()
-
-            if not message_result:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"Message not found with ID: {message_id}"
-                )
-            
-            # Delete message
-            await self.db.delete(message_result)
-            await self.db.commit()
-
-            # Ensure message has been deleted from the DB
-            deleted_message = await self.db.execute(select(Message).filter(Message.message_id == message_id))
-            deleted_message_result = deleted_message.scalars().first()
-
-            if deleted_message_result:
-                return False
-            else:
-                return True
-
-            
-        
-        except SQLAlchemyError as e:
-            logger.error(e)
-            raise HTTPException(
-                status_code=500,
-                detail="An unexpected error occurred during message deletion"
-            )
-    
     # Update a message's 'hasActiveMessage' boolean
     async def update_hasActiveMessage_boolean(self, message_id: int, message_update: MessageActiveUpdate) -> MessageResponse:
         try:

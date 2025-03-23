@@ -20,22 +20,6 @@ async def create_message(message: MessageCreate, db_session: DBSessionDep) -> Me
     message_ops = MessageOperations(db_session)
     return await message_ops.create_message(message)
 
-# Delete a message
-@message_router.delete("/{message_id}", response_model=dict, responses={
-    500: {"model": ErrorResponse},
-    404: {"model": ErrorResponse}
-})
-async def delete_message(message_id: int, db_session: DBSessionDep) -> dict:
-    message_ops = MessageOperations(db_session)
-    result = message_ops.delete_message(message_id)
-    if result:
-        return {"result": "message deletion successful"}
-    else:
-        raise HTTPException(
-            status_code=500,
-            detail="Message deletion unsuccessful"
-        )
-
 # Update "hasActiveMessage" attribute on a message
 @message_router.put("/{message_id}", response_model=MessageResponse, responses={
     500: {"model": ErrorResponse},
