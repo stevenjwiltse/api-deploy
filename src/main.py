@@ -4,7 +4,7 @@ import uvicorn
 from fastapi import FastAPI, Depends, Form
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
-from core.db import sessionmanager
+from core.db import async_session_manager
 from core.config import settings
 from routers.user_router import user_router
 from auth.controller import AuthController
@@ -20,9 +20,9 @@ from routers.message_router import message_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     yield
-    if sessionmanager._engine is not None:
+    if async_session_manager._engine is not None:
         # Close the DB connection
-        await sessionmanager.close()
+        await async_session_manager.close()
 
 
 app = FastAPI(lifespan=lifespan)
