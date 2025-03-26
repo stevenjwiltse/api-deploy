@@ -9,3 +9,4 @@ cryptography
 python-keycloak
 pydantic-settings
 poetry
+fastapi-mail

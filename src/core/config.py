@@ -1,7 +1,7 @@
 import os
-
 from typing import TypedDict
 from dotenv import load_dotenv
+from fastapi_mail import ConnectionConfig
 
 load_dotenv()
 
@@ -24,6 +24,14 @@ required_environment_variables = [
     "KEYCLOAK_FRONT_END_SECRET",
     "KEYCLOAK_ADMIN_USERNAME",
     "KEYCLOAK_ADMIN_PASSWORD",
+    "MAIL_USERNAME",
+    "MAIL_PASSWORD",
+    "MAIL_FROM",
+    "MAIL_PORT",
+    "MAIL_SERVER",
+    "MAIL_TLS",
+    "MAIL_SSL",
+    "USE_CREDENTIALS",
 ]
 
 class BaseSettings(TypedDict):
@@ -45,6 +53,14 @@ class BaseSettings(TypedDict):
     keycloak_front_end_secret: str
     keycloak_admin_username: str
     keycloak_admin_password: str
+    mail_username: str
+    mail_password: str
+    mail_from: str
+    mail_port: int
+    mail_server: str
+    mail_tls: bool
+    mail_ssl: bool
+    use_credentials: bool
 
 class Settings:
     def __init__(self):
@@ -75,7 +91,28 @@ class Settings:
             "keycloak_front_end_secret": os.getenv("KEYCLOAK_FRONT_END_SECRET"),
             "keycloak_admin_username": os.getenv("KEYCLOAK_ADMIN_USERNAME"),
             "keycloak_admin_password": os.getenv("KEYCLOAK_ADMIN_PASSWORD"),
+            "mail_username": os.getenv("MAIL_USERNAME"),
+            "mail_password": os.getenv("MAIL_PASSWORD"),
+            "mail_from": os.getenv("MAIL_FROM"),
+            "mail_port": os.getenv("MAIL_PORT"),
+            "mail_server": os.getenv("MAIL_SERVER"),
+            "mail_tls": self.check_boolean(os.getenv("MAIL_TLS")),
+            "mail_ssl": self.check_boolean(os.getenv("MAIL_SSL")),
+            "use_credentials": self.check_boolean(os.getenv("USE_CREDENTIALS")),
         }
+    
+    def get_mail_config(self) -> ConnectionConfig:
+        config = self.get_config()
+        return ConnectionConfig(
+            MAIL_USERNAME=config["mail_username"],
+            MAIL_PASSWORD=config["mail_password"],
+            MAIL_FROM=config["mail_from"],
+            MAIL_PORT=config["mail_port"],
+            MAIL_SERVER=config["mail_server"],
+            MAIL_STARTTLS=config["mail_tls"],
+            MAIL_SSL_TLS=config["mail_ssl"],
+            USE_CREDENTIALS=config["use_credentials"],
+        )
     
     def check_boolean(self, value: str) -> bool:
         return value.lower() == "true"
@@ -85,4 +122,3 @@ class Settings:
     
 
 settings = Settings()
-
