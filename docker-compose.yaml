@@ -1,5 +1,4 @@
 services:
-
     keycloak:
         image: quay.io/keycloak/keycloak:latest
         container_name: keycloak
@@ -33,8 +32,18 @@ services:
             retries: 5
         env_file:
             - .env
-        volumes:
-            - ./db-dump:/docker-entrypoint-initdb.d
+        # volumes:
+        #     - ./db-dump:/docker-entrypoint-initdb.d
+    
+    phpmyadmin:
+        image: phpmyadmin:latest
+        depends_on:
+            - db
+        ports:
+            - 8082:80
+        environment:
+            - PMA_HOST=${MYSQL_HOST}
+            - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
         
     api:
         image: python:3.12
@@ -49,12 +58,12 @@ services:
         expose:
             - 8000:8000
         working_dir:
-            /app/src
+            /app
         volumes:
             - ./:/app
         env_file:
             - .env
-        command: bash -c "pip install -r ../requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+        command: sh scripts/start.sh
 
     smtp:
         image: gessnerfl/fake-smtp-server:latest

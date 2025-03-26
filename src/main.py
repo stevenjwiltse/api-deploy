@@ -4,7 +4,7 @@ import uvicorn
 from fastapi import FastAPI, Depends, Form
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
-from core.db import sessionmanager
+from core.db import async_session_manager
 from core.config import settings
 from routers.user_router import user_router
 from auth.controller import AuthController
@@ -14,13 +14,17 @@ from routers.schedule_router import schedule_router
 from routers.auth_router import auth_router
 from routers.appointment_router import appointment_router
 from routers.email_router import email_router
+from routers.thread_router import thread_router
+from routers.message_router import message_router
+
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     yield
-    if sessionmanager._engine is not None:
+    if async_session_manager._engine is not None:
         # Close the DB connection
-        await sessionmanager.close()
+        await async_session_manager.close()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -38,26 +42,17 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-# Connect auth_router
+
+# Connect routers
 app.include_router(auth_router)
-
-# Connect email_router
 app.include_router(email_router)
-
-# Connect user_router
 app.include_router(user_router)
-
-# Connect barber_router
 app.include_router(barber_router)
-
-# Connect service_router
 app.include_router(service_router)
-
-# Connect schedule_router
 app.include_router(schedule_router)
-
-# Connect appointment_router
 app.include_router(appointment_router)
+app.include_router(thread_router)
+app.include_router(message_router)
 
 # Define the root endpoint
 @app.get("/")
