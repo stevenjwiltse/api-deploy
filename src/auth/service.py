@@ -1,3 +1,5 @@
+import json
+
 from fastapi import HTTPException, status, Security, Depends
 from keycloak.exceptions import KeycloakAuthenticationError
 from core.config import settings
@@ -6,7 +8,25 @@ from keycloak import KeycloakOpenID, KeycloakOpenIDConnection, KeycloakAdmin
 from modules.user.user_schema import UserCreate, UserUpdate
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
+from urllib.request import urlopen
+from authlib.jose.rfc7517.jwk import JsonWebKey
+from authlib.oauth2.rfc7523 import JWTBearerTokenValidator
+
 bearer_scheme = HTTPBearer()
+
+class ClientCredsTokenValidator(JWTBearerTokenValidator):
+    def __init__(self, issuer):
+        jsonurl = urlopen(f"{issuer}/protocol/openid-connect/certs")
+        public_key = JsonWebKey.import_key_set(json.loads(jsonurl.read()))
+        super(ClientCredsTokenValidator, self).__init__(public_key)
+        self.claims_options = {
+            "exp": {"essential": True},
+            "iss": {"essential": True, "value": issuer},
+        }
+
+    def validate_token(self, token, scopes, request):
+        super(ClientCredsTokenValidator, self).validate_token(token, scopes, request)
+
 
 class AuthService():
 
@@ -29,6 +49,8 @@ class AuthService():
         verify=True,
     )
     keycloak_admin = KeycloakAdmin(connection=keycloak_admin_connection)
+    KEYCLOAK_ISSUER = settings.get_config()["keycloak_server_url"] + "/realms/" + settings.get_config()["keycloak_realm"]
+    validator = ClientCredsTokenValidator(KEYCLOAK_ISSUER)
 
 
     # Checks username and password against Keycloak DB and return JWT
@@ -51,6 +73,19 @@ class AuthService():
         Verify the given token and return user information.
         """
         try:
+            # Introspects the token to check its validity
+            token_info = AuthService.keycloak_openid.introspect(token)
+            print(f"Token info: {token_info}")
+            return
+
+            is_valid = AuthService.validator.validate_token(token_info, scopes=None, request=None)
+            print(f"Token is valid: {is_valid}")
+            if not is_valid:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+                )
+            
+
             # Retrives user data from the Keycloak server
             user_info = AuthService.keycloak_openid.userinfo(token)
             user_roles = AuthService.keycloak_admin.get_realm_roles_of_user(user_info["sub"])

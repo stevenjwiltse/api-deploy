@@ -4,7 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
 from modules.user.models import Barber
 from modules.user.models import User
-from modules.user.barber_schema import BarberBase, BarberResponse
+from modules.user.barber_schema import BarberCreate, BarberResponse
 from typing import List
 
 '''
@@ -18,7 +18,7 @@ class BarberOperations:
         self.db = db
     
     # Create a Barber
-    async def create_barber(self, user: BarberBase) -> BarberResponse:
+    async def create_barber(self, user: BarberCreate) -> Barber:
         result = await self.db.execute(select(User).filter(User.user_id == user.user_id))
         first_result = result.scalars().first()
 

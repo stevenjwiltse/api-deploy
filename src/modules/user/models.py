@@ -25,6 +25,10 @@ from sqlalchemy.sql import func
 
 import enum
 
+from modules.user.barber_schema import BarberResponse
+from modules.user.user_schema import UserResponse
+from modules.schedule_schema import ScheduleResponse, TimeSlotChildResponse
+
 class Base(DeclarativeBase):
     pass
 
@@ -76,7 +80,7 @@ class Barber(Base):
     '''
 
     # Barber is linked to a single user (as specified by 'uselist = false' in User table above. One-to-One)
-    user: Mapped["User"] = relationship(back_populates="barber")
+    user: Mapped["User"] = relationship(back_populates="barber", lazy="selectin")
 
     # Barber can have multiple Appointments (One-to-Many)
     appointments: Mapped[list["Appointment"]] = relationship(back_populates="barber")
@@ -84,6 +88,18 @@ class Barber(Base):
     # A Barber can have multiple Schedules (One-to-Many)
     schedules: Mapped[list["Schedule"]] = relationship(back_populates="barber")
 
+    def to_response_schema(self) -> BarberResponse:
+        return BarberResponse(
+        barber_id=self.barber_id,
+        user=UserResponse(
+            user_id=self.user.user_id,
+            firstName=self.user.firstName,
+            lastName=self.user.lastName,
+            email=self.user.email,
+            phoneNumber=self.user.phoneNumber,
+            is_admin=self.user.is_admin
+        )
+    )
 
 class Appointment(Base):
     __tablename__ = "appointment"
@@ -158,10 +174,27 @@ class Schedule(Base):
     Schedule class relationships
     '''
     # Each schedule is assigned to a single Barber (Many-to-One)
-    barber: Mapped["Barber"] = relationship(back_populates="schedules")
+    barber: Mapped["Barber"] = relationship(back_populates="schedules", lazy="selectin")
 
     # Each schedule links to multiple time slots (One-to-Many)
-    time_slots: Mapped[list["TimeSlot"]] = relationship("TimeSlot", back_populates="schedule", cascade="all, delete-orphan")
+    time_slots: Mapped[list["TimeSlot"]] = relationship("TimeSlot", back_populates="schedule", cascade="all, delete-orphan", lazy="selectin")
+
+    def to_response_schema(self) -> ScheduleResponse:
+        return ScheduleResponse(
+            barber_id=self.barber_id,
+            date=self.date,
+            is_working=self.is_working,
+            schedule_id=self.schedule_id,
+            time_slots=[
+                TimeSlotChildResponse(
+                    slot_id=time_slot.slot_id,
+                    start_time=time_slot.start_time,
+                    end_time=time_slot.end_time,
+                    is_available=time_slot.is_available
+                ) for time_slot in self.time_slots
+            ],
+            barber=self.barber.to_response_schema()
+        )
 
 class TimeSlot(Base):
     __tablename__ = "time_slots"
