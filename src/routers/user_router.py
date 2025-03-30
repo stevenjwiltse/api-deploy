@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from core.db import get_db_session
@@ -39,11 +39,16 @@ async def create_user(user: UserCreate, db_session: DBSessionDep):
 @user_router.get("", response_model=List[UserResponse], responses = {
     500: {"model": ErrorResponse}
 })
-async def get_users(db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+async def get_users(
+    db_session: DBSessionDep, 
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, le=100)
+):
     AuthController.protected_endpoint(credentials, required_role="barber")
     
     user_ops = UserOperations(db_session)
-    return await user_ops.get_all_users()
+    return await user_ops.get_all_users(page, limit)
 
 # GET endpoint to retrieve a specific user in the database by their ID
 @user_router.get("/{user_id}", response_model=UserResponse, responses= {

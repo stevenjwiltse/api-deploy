@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 
 from core.dependencies import DBSessionDep
 from modules.user.service_schema import ServiceBase, ServiceResponse, ServiceUpdate
@@ -33,9 +33,13 @@ async def create_service(service: ServiceBase, db_session: DBSessionDep, credent
 @service_router.get("", response_model=List[ServiceResponse], responses = {
     500: {"model": ErrorResponse}
 })
-async def get_all_services(db_session: DBSessionDep):
+async def get_all_services(
+    db_session: DBSessionDep,
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, le=100)
+):
     service_ops = ServiceOperations(db_session)
-    response = await service_ops.get_all_services()
+    response = await service_ops.get_all_services(page, limit)
     
     return response
 

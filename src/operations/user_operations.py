@@ -64,9 +64,13 @@ class UserOperations:
             )
 
     # Get all users
-    async def get_all_users(self) -> List[User]:
+    async def get_all_users(self, page: int, limit: int) -> List[User]:
         try:
-            result = await self.db.execute(select(User))
+
+            # Calculate offset based on page/limit provided by client
+            offset = (page - 1) * limit
+
+            result = await self.db.execute(select(User).limit(limit).offset(offset))
             return result.scalars().all()
         # Not anticipating many errors here, but just in case
         except SQLAlchemyError:
