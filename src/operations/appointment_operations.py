@@ -81,9 +81,12 @@ class AppointmentOperations:
             )
         
     #Get all appointments
-    async def get_all_appointments(self) -> List[Appointment]:
+    async def get_all_appointments(self, page: int, limit: int) -> List[Appointment]:
         try:
-            result = await self.db.execute(select(Appointment))
+            # Calculate offset for SQL query
+            offset = (page - 1) * limit
+
+            result = await self.db.execute(select(Appointment).limit(limit).offset(offset))
             return result.scalars().all()
         except SQLAlchemyError:
             raise HTTPException(
