@@ -7,8 +7,11 @@ from sqlalchemy import Float
 
 class ServiceBase(BaseModel):
     name: str
-    duration: time
+    duration: int
     price: Annotated[Decimal, Field(ge=0, max_digits=5, decimal_places=2)]
+    category: str
+    description: str
+    popularity_score: int
 
 class ServiceResponse(ServiceBase):
     service_id: int
@@ -18,5 +21,8 @@ class ServiceResponse(ServiceBase):
 
 class ServiceUpdate(BaseModel):
     name: Optional[str] = None
-    duration: Optional[time] = None
+    duration: Optional[int] = None
     price: Annotated[Decimal, Field(ge=0, max_digits=5, decimal_places=2)] = None
+    category: Optional[str] = None
+    description: Optional[str] = None
+    popularity_score: Optional[str] = None
