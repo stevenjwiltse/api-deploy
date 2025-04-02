@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from modules.thread_schema import ThreadCreate, ThreadResponse
 from modules.user.error_response_schema import ErrorResponse
 from core.dependencies import DBSessionDep
@@ -27,9 +27,15 @@ async def create_thread(thread: ThreadCreate, db_session: DBSessionDep) -> Threa
     404: {"model": ErrorResponse},
     500: {"model": ErrorResponse}
 })
-async def get_threads_by_user_id(logged_user_id: int, other_user_id: int, db_session: DBSessionDep) -> List[ThreadResponse]:
+async def get_threads_by_user_id(
+    logged_user_id: int, 
+    other_user_id: int, 
+    db_session: DBSessionDep,
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, le=100)
+) -> List[ThreadResponse]:
     thread_ops = ThreadOperations(db_session)
-    response = await thread_ops.get_threads_by_user_id(logged_user_id, other_user_id)
+    response = await thread_ops.get_threads_by_user_id(logged_user_id, other_user_id, page, limit)
     if not response:
         raise HTTPException(
             status_code=404,
@@ -44,9 +50,15 @@ async def get_threads_by_user_id(logged_user_id: int, other_user_id: int, db_ses
     404: {"model": ErrorResponse},
     500: {"model": ErrorResponse}
 })
-async def get_all_threads_by_user_id(user_id: int, db_session: DBSessionDep) -> List[ThreadResponse]:
+async def get_all_threads_by_user_id(
+    user_id: int,
+    db_session: DBSessionDep,
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, le=100)
+) -> List[ThreadResponse]:
+    
     thread_ops = ThreadOperations(db_session)
-    response = await thread_ops.get_all_threads_by_user_id(user_id)
+    response = await thread_ops.get_all_threads_by_user_id(user_id, page, limit)
     if not response:
         raise HTTPException(
             status_code=404,

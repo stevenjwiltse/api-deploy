@@ -107,9 +107,12 @@ class AppointmentOperations:
             )
         
     #Get all appointments
-    async def get_all_appointments(self) -> List[AppointmentResponse]:
+    async def get_all_appointments(self, page: int, limit: int) -> List[AppointmentResponse]:
         try:
-            result = await self.db.execute(select(Appointment))
+            # Calculate offset for SQL query
+            offset = (page - 1) * limit
+
+            result = await self.db.execute(select(Appointment).limit(limit).offset(offset))
             appointments = result.scalars().all()
 
             if not appointments:

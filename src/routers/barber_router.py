@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from operations.barber_operations import BarberOperations
 from core.dependencies import DBSessionDep
@@ -33,10 +33,15 @@ async def create_barber(user: BarberBase, db_session: DBSessionDep, credentials:
 @barber_router.get("", response_model=List[BarberResponse], responses = {
     500: {"model": ErrorResponse}
 })
-async def get_all_barbers(db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+async def get_all_barbers(
+    db_session: DBSessionDep, 
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, le=100)
+):
 
     barber_ops = BarberOperations(db_session)
-    response = await barber_ops.get_all_barbers()
+    response = await barber_ops.get_all_barbers(page, limit)
 
     return response
 

@@ -68,7 +68,7 @@ class ThreadOperations:
     
     # Return threads were the user is both 'sendingUser' and 'recievingUser'
     # in order to properly display both sides of the conversation
-    async def get_threads_by_user_id(self, logged_user_id: int, other_user_id: int) -> List[ThreadResponse]:
+    async def get_threads_by_user_id(self, logged_user_id: int, other_user_id: int, page: int, limit: int) -> List[ThreadResponse]:
         try:
             
             #Check to make sure both users IDs are valid
@@ -91,6 +91,9 @@ class ThreadOperations:
                     detail=f"No user found with ID: {other_user_id}"
                 )
             
+            # Set offset based off page requested by client
+            offset = (page - 1) * limit
+            
             # Retrieve threads from DB for both users
 
             threads = await self.db.execute(
@@ -99,7 +102,7 @@ class ThreadOperations:
                         (Thread.receivingUser == logged_user_id) & (Thread.sendingUser == other_user_id) |
                         (Thread.receivingUser == other_user_id) & (Thread.sendingUser == logged_user_id)
                     )
-                )
+                ).limit(limit).offset(offset)
             )
         
             threads_results = threads.scalars().all()
@@ -137,7 +140,7 @@ class ThreadOperations:
                 detail="An unexpected error occurred during retrieval"
             )
     
-    async def get_all_threads_by_user_id(self, user_id: int) -> List[ThreadResponse]:
+    async def get_all_threads_by_user_id(self, user_id: int, page: int, limit: int) -> List[ThreadResponse]:
         try:
             # Make sure user_id links to a valid user
             user = await self.db.execute(select(User).filter(User.user_id == user_id))
@@ -157,10 +160,13 @@ class ThreadOperations:
             
             thread_responses = []
 
+            # Set offset based off page requested by client
+            offset = (page - 1) * limit
+
             for thread in thread_results:
            
                 messages = await self.db.execute(
-                    select(Message).filter(Message.thread_id == thread.thread_id)
+                    select(Message).filter(Message.thread_id == thread.thread_id).limit(limit).offset(offset)
                 )
                 messages_results = messages.scalars().all()
 

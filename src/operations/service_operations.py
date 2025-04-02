@@ -28,9 +28,12 @@ class ServiceOperations:
                 detail="An unexpected error occurred"
             )
         
-    async def get_all_services(self) -> List[ServiceResponse]:
+    async def get_all_services(self, page: int, limit: int) -> List[ServiceResponse]:
         try:
-            services = await self.db.execute(select(Service))
+            # Calculate offset for pagination
+            offset = (page - 1) * limit
+
+            services = await self.db.execute(select(Service).limit(limit).offset(offset))
             return services.scalars().all()
         except SQLAlchemyError:
             raise HTTPException(
