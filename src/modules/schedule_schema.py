@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
-from modules.time_slot_schema import TimeSlotChildResponse, TimeSlotCreate
-from modules.user.barber_schema import BarberResponse
+from .time_slot_schema import TimeSlotChildResponse, TimeSlotCreate
+from .user.barber_schema import BarberResponse
 import datetime
 
 '''
@@ -28,7 +28,7 @@ class ScheduleUpdate(BaseModel):
 class ScheduleResponse(ScheduleCreate):
     schedule_id: int
     is_working: bool
-    time_slots: list[TimeSlotChildResponse] = []
+    time_slots: list[TimeSlotChildResponse]
     barber: BarberResponse
 
     class Config:

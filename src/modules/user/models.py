@@ -25,9 +25,9 @@ from sqlalchemy.sql import func
 
 import enum
 
-from modules.user.barber_schema import BarberResponse
-from modules.user.user_schema import UserResponse
-from modules.schedule_schema import ScheduleResponse, TimeSlotChildResponse
+from .barber_schema import BarberResponse
+from .user_schema import UserResponse
+from ..schedule_schema import ScheduleResponse, TimeSlotChildResponse
 
 class Base(DeclarativeBase):
     pass

@@ -42,7 +42,8 @@ async def create_schedule(schedule: ScheduleCreate, db_session: DBSessionDep, cr
 @schedule_router.get("", response_model=List[ScheduleResponse], responses = {
     500: {"model": ErrorResponse}
 })
-async def get_schedules(db_session: DBSessionDep):
+async def get_schedules(db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+    AuthController.protected_endpoint(credentials)
 
     schedule_ops = ScheduleOperations(db_session)
     results = await schedule_ops.get_all_schedules()

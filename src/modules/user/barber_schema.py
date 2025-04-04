@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-from modules.user.user_schema import UserBase
+from .user_schema import UserBase
 
 class BarberCreate(BaseModel):
     user_id: int

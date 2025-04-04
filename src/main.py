@@ -36,7 +36,7 @@ bearer_scheme = HTTPBearer()
 app.add_middleware(
     CORSMiddleware,
 
-    allow_origins=[settings.get_config()["backend_cors_origins"], "*"],
+    allow_origins=settings.get_config()["backend_cors_origins"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
