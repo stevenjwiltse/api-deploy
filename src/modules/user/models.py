@@ -177,7 +177,7 @@ class Schedule(Base):
     barber: Mapped["Barber"] = relationship(back_populates="schedules", lazy="selectin")
 
     # Each schedule links to multiple time slots (One-to-Many)
-    time_slots: Mapped[list["TimeSlot"]] = relationship("TimeSlot", back_populates="schedule", cascade="all, delete-orphan", lazy="selectin")
+    time_slots: Mapped[list["TimeSlot"]] = relationship("TimeSlot", back_populates="schedule", cascade="all, delete, delete-orphan", lazy="selectin")
 
     def to_response_schema(self) -> ScheduleResponse:
         return ScheduleResponse(
@@ -214,7 +214,7 @@ class TimeSlot(Base):
     schedule: Mapped["Schedule"] = relationship("Schedule", back_populates="time_slots")
 
     #Relationship to Appointment_TimeSlot (creates Many-to-Many with appointment)
-    appointment_time_slots: Mapped[list["Appointment_TimeSlot"]] = relationship("Appointment_TimeSlot", back_populates="time_slot")
+    appointment_time_slots: Mapped[list["Appointment_TimeSlot"]] = relationship("Appointment_TimeSlot", back_populates="time_slot", cascade="all, delete, delete-orphan")
 
 
 class Appointment_TimeSlot(Base):

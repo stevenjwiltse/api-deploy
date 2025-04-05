@@ -2,7 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
 from modules.user.models import Schedule, TimeSlot
-from modules.schedule_schema import ScheduleCreate
+from modules.schedule_schema import ScheduleCreate, ScheduleUpdate
+from modules.time_slot_schema import TimeSlotUpdate
 from typing import List, Optional
 from fastapi import HTTPException
 from datetime import time
@@ -73,7 +74,7 @@ class ScheduleOperations:
 
     # Update an existing schedule block
     async def update_schedule(
-        self, schedule_id: int, schedule_data
+        self, schedule_id: int, schedule_data: ScheduleUpdate
     ) -> Optional[Schedule]:
         try:
             result = await self.db.execute(
@@ -83,8 +84,34 @@ class ScheduleOperations:
             if not schedule:
                 return None
 
-            for key, value in schedule_data.dict(exclude_unset=True).items():
-                setattr(schedule, key, value)
+            for key, value in schedule_data.model_dump(exclude_unset=True).items():
+                if key == "time_slots":
+                    # Update time slots if provided
+                    for time_slot in value:
+                        time_slot = TimeSlotUpdate(**time_slot)
+                        existing_time_slot = (
+                            await self.db.execute(
+                                select(TimeSlot)
+                                .filter(
+                                    TimeSlot.slot_id == time_slot.slot_id,
+                                    TimeSlot.schedule_id == schedule_id,
+                                )
+                            )
+                        ).scalars().first()
+                        if existing_time_slot:
+                            existing_time_slot.start_time = time_slot.start_time
+                            existing_time_slot.end_time = time_slot.end_time
+                            existing_time_slot.is_available = time_slot.is_available
+                        else:
+                            new_time_slot = TimeSlot(
+                                schedule_id=schedule.schedule_id,
+                                start_time=time_slot.start_time,
+                                end_time=time_slot.end_time,
+                                is_available=time_slot.is_available,
+                            )
+                            self.db.add(new_time_slot)
+                else:
+                    setattr(schedule, key, value)
 
             await self.db.commit()
             await self.db.refresh(schedule)

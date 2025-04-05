@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-from .time_slot_schema import TimeSlotChildResponse, TimeSlotCreate
+from .time_slot_schema import TimeSlotChildResponse, TimeSlotCreate, TimeSlotUpdate
 from .user.barber_schema import BarberResponse
 import datetime
 
@@ -21,6 +21,7 @@ class ScheduleUpdate(BaseModel):
     barber_id: Optional[int] = None
     date: Optional[datetime.date] = None
     is_working: Optional[bool] = None
+    time_slots: Optional[list[TimeSlotUpdate]] = None
 
     class Config:
         arbitrary_types_allowed = True

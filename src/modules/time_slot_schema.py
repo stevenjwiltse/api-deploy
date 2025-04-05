@@ -16,6 +16,7 @@ class TimeSlotCreate(BaseModel):
         arbitrary_types_allowed = True
 
 class TimeSlotUpdate(BaseModel):
+    slot_id: int
     schedule_id: Optional[int] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
