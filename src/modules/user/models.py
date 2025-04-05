@@ -120,7 +120,7 @@ class Appointment(Base):
     barber: Mapped["Barber"] = relationship(back_populates="appointments")
 
     # An Appointment can have multiple AppointmentService records ()
-    services: Mapped[list["AppointmentService"]] = relationship(back_populates="appointment")
+    appointment_services: Mapped[list["AppointmentService"]] = relationship(back_populates="appointment")
 
      # Relationship to Appointment_TimeSlot (creates Many-to-Many with TimeSlot)
     appointment_time_slots: Mapped[list["Appointment_TimeSlot"]] = relationship("Appointment_TimeSlot", back_populates="appointment")
@@ -131,8 +131,11 @@ class Service(Base):
     
     service_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
-    duration: Mapped[Time] = mapped_column(Time, nullable=False)
+    duration: Mapped[int] = mapped_column(Integer, nullable=False)
     price: Mapped[Float] = mapped_column(Float(5, 2), nullable=False)
+    category: Mapped[str] = mapped_column(String(50), nullable=False)
+    description: Mapped[str] = mapped_column(String, nullable=False)
+    popularity_score: Mapped[int] = mapped_column(Integer, nullable=False)
     
     '''
     Service class relationships
@@ -156,7 +159,7 @@ class AppointmentService(Base):
     service: Mapped["Service"] = relationship(back_populates="appointment_services")
 
     # Each AppointmentService is linked to one Service
-    appointment: Mapped["Appointment"] = relationship(back_populates="services")
+    appointment: Mapped["Appointment"] = relationship(back_populates="appointment_services")
 
 
 class Schedule(Base):

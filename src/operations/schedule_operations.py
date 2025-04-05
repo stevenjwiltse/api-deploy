@@ -47,9 +47,12 @@ class ScheduleOperations:
         #     )
 
     # Get all schedule blocks
-    async def get_all_schedules(self) -> List[Schedule]:
+    async def get_all_schedules(self, page: int, limit: int) -> List[Schedule]:
         try:
-            result = await self.db.execute(select(Schedule))
+            # Calculate offset for SQL query
+            offset = (page - 1) * limit
+
+            result = await self.db.execute(select(Schedule).limit(limit).offset(offset))
             return result.scalars().all()
         except SQLAlchemyError:
             raise HTTPException(

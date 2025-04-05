@@ -31,9 +31,13 @@ async def create_appointment(appointment: AppointmentCreate, db_session: DBSessi
 @appointment_router.get("", response_model=List[AppointmentResponse], responses = {
     500: {"model": ErrorResponse}
 })
-async def get_appointments(db_session: DBSessionDep):
+async def get_appointments(
+    db_session: DBSessionDep,
+    page: int,
+    limit: int
+):
     appointment_ops = AppointmentOperations(db_session)
-    return await appointment_ops.get_all_appointments()
+    return await appointment_ops.get_all_appointments(page, limit)
 
 # GET endpoint to retrieve a specific appointment from the database by the appointment_id
 @appointment_router.get("/{appointment_id}", response_model=AppointmentResponse, responses = {

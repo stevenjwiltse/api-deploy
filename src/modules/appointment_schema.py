@@ -15,20 +15,24 @@ class AppointmentStatus(str, Enum):
 class AppointmentCreate(BaseModel):
     user_id: int
     barber_id: int
-    schedule_id: int
     status: AppointmentStatus 
+    time_slot: list[int]
+    service_id: list[int]
 
 class AppointmentUpdate(BaseModel):
     user_id: Optional[int] = None
     barber_id: Optional[int] = None
-    schedule_id: Optional[int] = None
     status: Optional[AppointmentStatus] = None
+    time_slot: Optional[list[int]] = None
+    service_id: Optional[list[int]] = None
 
 class AppointmentResponse(BaseModel):
     appointment_id: int
     user_id: int
     barber_id: int
-    status: AppointmentStatus 
+    status: AppointmentStatus
+    time_slot: list[int] 
+    service_id: list[int]
 
 
     class Config:

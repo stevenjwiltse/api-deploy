@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from core.db import get_db_session
@@ -42,11 +42,16 @@ async def create_schedule(schedule: ScheduleCreate, db_session: DBSessionDep, cr
 @schedule_router.get("", response_model=List[ScheduleResponse], responses = {
     500: {"model": ErrorResponse}
 })
-async def get_schedules(db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+async def get_schedules(
+    db_session: DBSessionDep, 
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    page : int = Query(1, ge=1),
+    limit: int = Query(10, le=100)
+):
     AuthController.protected_endpoint(credentials)
 
     schedule_ops = ScheduleOperations(db_session)
-    results = await schedule_ops.get_all_schedules()
+    results = await schedule_ops.get_all_schedules(page, limit)
     return [schedule.to_response_schema() for schedule in results]
 
 # GET endpoint to retrieve a specific schedule block from the database by the schedule_id

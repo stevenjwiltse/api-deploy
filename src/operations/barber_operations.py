@@ -54,9 +54,12 @@ class BarberOperations:
             )
     
     # Retrieve all barbers
-    async def get_all_barbers(self) -> List[Barber]:
+    async def get_all_barbers(self, page: int, limit: int) -> List[Barber]:
         try: 
-            result = await self.db.execute(select(Barber))
+            # Calculate offset for SQL query
+            offset = (page - 1) * limit
+
+            result = await self.db.execute(select(Barber).limit(limit).offset(offset))
             return result.scalars().all()
         except SQLAlchemyError:
             raise HTTPException(
