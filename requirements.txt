@@ -9,4 +9,5 @@ cryptography
 python-keycloak
 pydantic-settings
 poetry
+authlib
 fastapi-mail
