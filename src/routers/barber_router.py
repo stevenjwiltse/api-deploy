@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from operations.barber_operations import BarberOperations
 from core.dependencies import DBSessionDep
-from modules.user.barber_schema import BarberResponse, BarberBase
+from modules.user.barber_schema import BarberResponse, BarberCreate
+from modules.user.user_schema import UserResponse
 from typing import List
 from auth.controller import AuthController
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -20,14 +21,14 @@ bearer_scheme = HTTPBearer()
     400: {"model": ErrorResponse},
     500: {"model": ErrorResponse}
 })
-async def create_barber(user: BarberBase, db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+async def create_barber(user: BarberCreate, db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
     # Checks for barber role
     AuthController.protected_endpoint(credentials, required_role="barber")
     
     barber_ops = BarberOperations(db_session)
     response = await barber_ops.create_barber(user)
 
-    return response
+    return response.to_response_schema()
 
 # GET endpoint to retrieve all barbers
 @barber_router.get("", response_model=List[BarberResponse], responses = {
@@ -43,7 +44,10 @@ async def get_all_barbers(
     barber_ops = BarberOperations(db_session)
     response = await barber_ops.get_all_barbers(page, limit)
 
-    return response
+    barbers: List[BarberResponse] = []
+    for barber in response:
+        barbers.append(barber.to_response_schema())
+    return barbers
 
 # GET endpoint to retrieve a specific barber by their ID number
 @barber_router.get("/{barber_id}", response_model=BarberResponse, responses = {
@@ -53,7 +57,7 @@ async def get_barber_by_id(barber_id: int, db_session: DBSessionDep):
     barber_ops = BarberOperations(db_session)
     response = await barber_ops.get_barber_by_id(barber_id)
 
-    return response
+    return response.to_response_schema()
 
 
 
