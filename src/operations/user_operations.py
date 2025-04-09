@@ -43,8 +43,18 @@ class UserOperations:
             )
 
         try:
-            # Creates a new user in the database
+            # Creates a new user
             new_user = User(**user_data.model_dump())
+
+            # Add new user to Keycloak  
+            created_kc_user = AuthService.register_kc_user(new_user)
+            print("********TestUSER",new_user)
+            if not created_kc_user:
+                raise HTTPException(status_code=400, detail=f"Keycloak user creation has failed")
+            
+            # Add new user to DB
+            new_user.kc_id = created_kc_user
+            print("********TestUSERKCID",new_user)
             self.db.add(new_user)
             await self.db.commit()
             await self.db.refresh(new_user)
