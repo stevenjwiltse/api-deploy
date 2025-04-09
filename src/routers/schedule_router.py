@@ -1,3 +1,6 @@
+import datetime
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
@@ -46,12 +49,15 @@ async def get_schedules(
     db_session: DBSessionDep, 
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     page : int = Query(1, ge=1),
-    limit: int = Query(10, le=100)
+    limit: int = Query(10, le=100),
+    # Optional query parameters
+    schedule_date: Optional[datetime.date] = Query(None, description="Date to filter barbers by schedule"),
+    barber_id: Optional[int] = Query(None, description="Barber ID to filter schedules by"),
 ):
     AuthController.protected_endpoint(credentials)
 
     schedule_ops = ScheduleOperations(db_session)
-    results = await schedule_ops.get_all_schedules(page, limit)
+    results = await schedule_ops.get_all_schedules(page, limit, schedule_date, barber_id)
     return [schedule.to_response_schema() for schedule in results]
 
 # GET endpoint to retrieve a specific schedule block from the database by the schedule_id

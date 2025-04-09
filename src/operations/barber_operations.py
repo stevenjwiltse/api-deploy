@@ -1,11 +1,12 @@
+from typing import List
+
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
-from modules.user.models import Barber
-from modules.user.models import User
-from modules.user.barber_schema import BarberCreate, BarberResponse
-from typing import List
+from modules.user.models import Barber, Schedule, User
+from modules.user.barber_schema import BarberCreate
+
 
 '''
 Contains methods for barber creation and retrieval.
@@ -81,3 +82,23 @@ class BarberOperations:
                 status_code=500,
                 detail="An unexpected error occurred"
             )
+        
+    async def list_barbers_by_schedule_date(self, schedule_date: str, page: int = None, limit: int = None) -> List[Barber]:
+        # Get a Schedule object by date
+        schedules = await self.db.execute(select(Schedule).filter(Schedule.date == schedule_date))
+        schedules = schedules.scalars().all()
+        if not schedules:
+            return []
+
+        # Get all barbers by joining the Schedule table on the barber_id
+        result = await self.db.execute(
+            select(Barber).join(Schedule).filter(Schedule.schedule_id.in_([schedule.schedule_id for schedule in schedules])
+            ).distinct(Barber.barber_id)
+        )
+        barbers = result.scalars().all()
+        print(f"Barbers found: {barbers}")
+        if page and limit:
+            offset = (page - 1) * limit
+            barbers = barbers[offset:offset + limit]
+        return barbers
+

@@ -1,3 +1,5 @@
+import datetime
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -47,12 +49,16 @@ class ScheduleOperations:
         #     )
 
     # Get all schedule blocks
-    async def get_all_schedules(self, page: int, limit: int) -> List[Schedule]:
+    async def get_all_schedules(self, page: int, limit: int, schedule_date: datetime.date = None, barber_id: int = None) -> List[Schedule]:
         try:
             # Calculate offset for SQL query
             offset = (page - 1) * limit
-
-            result = await self.db.execute(select(Schedule).limit(limit).offset(offset))
+            select_query = select(Schedule).limit(limit).offset(offset)
+            if schedule_date:
+                select_query = select_query.filter(Schedule.date == schedule_date)
+            if barber_id:
+                select_query = select_query.filter(Schedule.barber_id == barber_id)
+            result = await self.db.execute(select_query)
             return result.scalars().all()
         except SQLAlchemyError:
             raise HTTPException(

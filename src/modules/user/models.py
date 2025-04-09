@@ -28,6 +28,8 @@ import enum
 from .barber_schema import BarberResponse
 from .user_schema import UserResponse
 from ..schedule_schema import ScheduleResponse, TimeSlotChildResponse
+from .service_schema import ServiceResponse
+from ..appointment_schema import AppointmentResponse
 
 class Base(DeclarativeBase):
     pass
@@ -68,6 +70,16 @@ class User(Base):
     # User can receive many Threads (One-To-Many)
     received_threads: Mapped[list["Thread"]] = relationship(foreign_keys="Thread.receivingUser", back_populates="receiving_user")
 
+
+    def to_response_schema(self) -> UserResponse:
+        return UserResponse(
+            user_id=self.user_id,
+            firstName=self.firstName,
+            lastName=self.lastName,
+            email=self.email,
+            phoneNumber=self.phoneNumber,
+            is_admin=self.is_admin
+        )
 
 class Barber(Base):
     __tablename__ = "barber"
@@ -114,17 +126,30 @@ class Appointment(Base):
     '''
 
     # Each appointment is linked to one User (who booked it) - (Many-to-One)
-    user: Mapped["User"] = relationship(back_populates="appointments")
+    user: Mapped["User"] = relationship(back_populates="appointments", lazy="selectin")
 
     # Each appointment is assigned to one Barber (Many-to-One)
-    barber: Mapped["Barber"] = relationship(back_populates="appointments")
+    barber: Mapped["Barber"] = relationship(back_populates="appointments", lazy="selectin")
 
     # An Appointment can have multiple AppointmentService records ()
-    appointment_services: Mapped[list["AppointmentService"]] = relationship(back_populates="appointment")
+    appointment_services: Mapped[list["AppointmentService"]] = relationship(back_populates="appointment", lazy="selectin")
 
      # Relationship to Appointment_TimeSlot (creates Many-to-Many with TimeSlot)
-    appointment_time_slots: Mapped[list["Appointment_TimeSlot"]] = relationship("Appointment_TimeSlot", back_populates="appointment")
+    appointment_time_slots: Mapped[list["Appointment_TimeSlot"]] = relationship("Appointment_TimeSlot", back_populates="appointment", lazy="selectin")
 
+    def to_response_schema(self) -> AppointmentResponse:
+        return AppointmentResponse(
+            appointment_id=self.appointment_id,
+            user=self.user.to_response_schema(),
+            barber=self.barber.to_response_schema(),
+            status=self.status,
+            time_slots=[
+                time_slot.time_slot.to_response_schema() for time_slot in self.appointment_time_slots
+            ],
+            services=[
+                service.service.to_reponse_schema() for service in self.appointment_services
+            ]
+        )
 
 class Service(Base):
     __tablename__ = "service"
@@ -134,7 +159,7 @@ class Service(Base):
     duration: Mapped[int] = mapped_column(Integer, nullable=False)
     price: Mapped[Float] = mapped_column(Float(5, 2), nullable=False)
     category: Mapped[str] = mapped_column(String(50), nullable=False)
-    description: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(String(75), nullable=False)
     popularity_score: Mapped[int] = mapped_column(Integer, nullable=False)
     
     '''
@@ -144,6 +169,16 @@ class Service(Base):
     # A service can be linked to multiple AppointmentService records (One-to-Many)
     appointment_services: Mapped[list["AppointmentService"]] = relationship(back_populates="service")
 
+    def to_reponse_schema(self) -> ServiceResponse:
+        return ServiceResponse(
+            service_id=self.service_id,
+            name=self.name,
+            duration=self.duration,
+            price=self.price,
+            category=self.category,
+            description=self.description,
+            popularity_score=self.popularity_score
+        )
 
 class AppointmentService(Base):
     __tablename__ = "appointment_service"
@@ -156,7 +191,7 @@ class AppointmentService(Base):
     '''
 
     # Each AppointmentService is linked to one Appointment
-    service: Mapped["Service"] = relationship(back_populates="appointment_services")
+    service: Mapped["Service"] = relationship(back_populates="appointment_services", lazy="selectin")
 
     # Each AppointmentService is linked to one Service
     appointment: Mapped["Appointment"] = relationship(back_populates="appointment_services")
@@ -189,12 +224,7 @@ class Schedule(Base):
             is_working=self.is_working,
             schedule_id=self.schedule_id,
             time_slots=[
-                TimeSlotChildResponse(
-                    slot_id=time_slot.slot_id,
-                    start_time=time_slot.start_time,
-                    end_time=time_slot.end_time,
-                    is_available=time_slot.is_available
-                ) for time_slot in self.time_slots
+                time_slot.to_response_schema() for time_slot in self.time_slots
             ],
             barber=self.barber.to_response_schema()
         )
@@ -207,6 +237,7 @@ class TimeSlot(Base):
     start_time: Mapped[Time] = mapped_column(Time, nullable=False)
     end_time: Mapped[Time] = mapped_column(Time, nullable=False)
     is_available: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_booked: Mapped[bool] = mapped_column(Boolean, default=False)
 
     __table_args__ = (UniqueConstraint("schedule_id", "start_time", "end_time", name="uq_schedule_time"),)
 
@@ -217,8 +248,16 @@ class TimeSlot(Base):
     schedule: Mapped["Schedule"] = relationship("Schedule", back_populates="time_slots")
 
     #Relationship to Appointment_TimeSlot (creates Many-to-Many with appointment)
-    appointment_time_slots: Mapped[list["Appointment_TimeSlot"]] = relationship("Appointment_TimeSlot", back_populates="time_slot", cascade="all, delete, delete-orphan")
-
+    appointment_time_slots: Mapped[list["Appointment_TimeSlot"]] = relationship("Appointment_TimeSlot", back_populates="time_slot", cascade="all, delete, delete-orphan", lazy="selectin")
+    
+    def to_response_schema(self) -> TimeSlotChildResponse:
+        return TimeSlotChildResponse(
+            slot_id=self.slot_id,
+            start_time=self.start_time,
+            end_time=self.end_time,
+            is_available=self.is_available,
+            is_booked=self.is_booked
+        )
 
 class Appointment_TimeSlot(Base):
     __tablename__ = "appointment_time_slots"
@@ -230,7 +269,7 @@ class Appointment_TimeSlot(Base):
     Appointment_TimeSlot class relationships
     '''
     # Each Appointment_TimeSlot is linked to one TimeSlot
-    time_slot: Mapped["TimeSlot"] = relationship(back_populates="appointment_time_slots")
+    time_slot: Mapped["TimeSlot"] = relationship(back_populates="appointment_time_slots", lazy="selectin")
 
     # Each Appointment_TimeSlot is linked to one TimeSlot
     appointment: Mapped["Appointment"] = relationship(back_populates="appointment_time_slots")

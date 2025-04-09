@@ -9,6 +9,8 @@ from auth.controller import AuthController
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import logging
 from modules.user.error_response_schema import ErrorResponse
+
+from auth.service import AuthService
 '''
 Endpoints for interactions with users table
 '''
@@ -32,6 +34,12 @@ async def create_user(user: UserCreate, db_session: DBSessionDep):
     created_user = await user_ops.create_user(user)
     if not created_user:
         raise HTTPException(status_code=400, detail="User creation failed")
+    
+    # Create a user in Keycloak
+    # Creates a Keycloak user 
+    created_kc_user = AuthService.register_kc_user(created_user)
+    if not created_kc_user:
+        raise HTTPException(status_code=400, detail=f"Keycloak user creation has failed")
     
     return created_user
 
@@ -63,6 +71,20 @@ async def get_user(user_id: int, db_session: DBSessionDep, credentials: HTTPAuth
         raise HTTPException(status_code=404, detail="User not found with ID provided")
     return user
 
+@user_router.get("/me", response_model=UserResponse, responses = {
+    400: {"model": ErrorResponse},
+    500: {"model": ErrorResponse}
+})
+async def get_current_user(db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+    # Get the current user from the token
+    user_info = AuthController.protected_endpoint(credentials)
+    
+    
+    if not user_info:
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+    
+    return user_info
+
 # PUT endpoint to update a specific user in the database by their ID
 @user_router.put("/{user_id}", response_model=UserResponse, responses = {
     400: {"model": ErrorResponse},
@@ -74,6 +96,10 @@ async def update_user(user_id: int, user: UserUpdate, db_session: DBSessionDep, 
     updated_user = await user_ops.update_user(user_id, user)
     if not updated_user:
         raise HTTPException(status_code=404, detail="User not found with ID provided")
+    
+    # Update user in Keycloak
+    AuthService.update_kc_user(updated_user)
+    
     return updated_user
 
 # DELETE endpoint to delete a user from the database by their ID

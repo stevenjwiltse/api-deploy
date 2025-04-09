@@ -9,6 +9,9 @@ from keycloak import KeycloakOpenID, KeycloakOpenIDConnection, KeycloakAdmin
 from modules.user.user_schema import UserCreate, UserUpdate
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
+from operations.user_operations import UserOperations
+from core.dependencies import DBSessionDep
+
 bearer_scheme = HTTPBearer()
 
 class AuthService:
@@ -64,6 +67,10 @@ class AuthService:
             # Parses user roles into list
             roles = token_info.get("realm_access", {}).get("roles", [])
             
+            # Get user record from database
+            user_ops = UserOperations(DBSessionDep)
+            user = user_ops.get_by_kc_id(token_info["sub"])
+
 
             this_user = UserInfo(
                 username=token_info["preferred_username"],

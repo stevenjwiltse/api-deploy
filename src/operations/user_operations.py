@@ -6,7 +6,6 @@ from pydantic import EmailStr
 from modules.user.user_schema import UserCreate, UserBase
 from typing import List, Optional
 from fastapi import HTTPException
-from auth.service import AuthService
 '''
 CRUD operations for interacting with users database table
 '''
@@ -49,11 +48,6 @@ class UserOperations:
             self.db.add(new_user)
             await self.db.commit()
             await self.db.refresh(new_user)
-
-            # Creates a Keycloak user 
-            created_kc_user = AuthService.register_kc_user(new_user)
-            if not created_kc_user:
-                raise HTTPException(status_code=400, detail=f"Keycloak user creation has failed")
             
             return new_user
         # If another error is returned that was somehow not caught above, return generic error message.
@@ -91,6 +85,17 @@ class UserOperations:
                 status_code=500,
                 detail="An unexpected error occured"
             )
+        
+    async def get_user_by_kc_id(self, kc_id: str) -> Optional[User]:
+        try:
+            result = await self.db.execute(select(User).filter(User.kc_id == kc_id))
+            return result.scalars().first()
+        # Handle generic exceptions, wrong ID provided error already handled in router
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=500,
+                detail="An unexpected error occured"
+            )
 
     # Update user by their ID
     async def update_user(self, user_id: int, user_data) -> Optional[User]:
@@ -115,9 +120,6 @@ class UserOperations:
 
             for key, value in user_data.dict(exclude_unset=True).items():
                 setattr(user, key, value)
-
-            # Update Keycloak user data
-            AuthService.update_kc_user(user_data)
 
             # Update database user data
             await self.db.commit()
