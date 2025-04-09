@@ -3,6 +3,7 @@ USE barbershop;
 -- User Table
 CREATE TABLE user (
     user_id INT PRIMARY KEY AUTO_INCREMENT,
+    kc_id VARCHAR(50) NOT NULL,
     firstName VARCHAR(50) NOT NULL,
     lastName VARCHAR(50) NOT NULL,
     email VARCHAR(50) UNIQUE NOT NULL,
@@ -78,11 +79,11 @@ CREATE TABLE message (
 
 
 -- Insert sample users (customers and barbers)
-INSERT INTO user (firstName, lastName, email, password, phoneNumber, is_admin) VALUES
-('John', 'Doe', 'john.doe@example.com', 'hashedpassword1', '1234567890', TRUE),  -- Barber
-('Jane', 'Smith', 'jane.smith@example.com', 'hashedpassword2', '0987654321', FALSE), -- Customer
-('Mike', 'Johnson', 'mike.johnson@example.com', 'hashedpassword3', '1122334455', TRUE), -- Barber
-('Sarah', 'Brown', 'sarah.brown@example.com', 'hashedpassword4', '6677889900', FALSE); -- Customer
+INSERT INTO user (kc_id, firstName, lastName, email, password, phoneNumber, is_admin) VALUES
+('41e28799-7aa8-438b-88b8-e6292b35bb01','John', 'Doe', 'john.doe@example.com', 'hashedpassword1', '1234567890', TRUE),  -- Barber
+('41e28799-7aa8-438b-88b8-e6292b35bb11', 'Jane', 'Smith', 'jane.smith@example.com', 'hashedpassword2', '0987654321', FALSE), -- Customer
+('41e28799-7aa8-438b-88b8-e6292b35bb21','Mike', 'Johnson', 'mike.johnson@example.com', 'hashedpassword3', '1122334455', TRUE), -- Barber
+'41e28799-7aa8-438b-88b8-e6292b35bb31','Sarah', 'Brown', 'sarah.brown@example.com', 'hashedpassword4', '6677889900', FALSE); -- Customer
 
 -- Insert sample barbers (linking them to existing users)
 INSERT INTO barber (user_id) VALUES
