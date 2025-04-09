@@ -598,8 +598,8 @@
                      "client",
                      "barber"],
       "attributes": {
-        "firstName": "John",
-        "lastName": "Doe"
+        "firstName": "owner",
+        "lastName": "owner"
       },
       "emailVerified": true
     },
@@ -616,8 +616,8 @@
       "realmRoles": ["client",
                      "barber"],
       "attributes": {
-        "firstName": "Sara",
-        "lastName": "Sanders"
+        "firstName": "barber",
+        "lastName": "barber"
       },
       "emailVerified": true
     },
@@ -633,8 +633,82 @@
       ],
       "realmRoles": ["client"],
       "attributes": {
-        "firstName": "Mary",
+        "firstName": "client",
+        "lastName": "client"
+      },
+      "emailVerified": true
+    },
+    {
+      "id": "41e28799-7aa8-438b-88b8-e6292b35bb01",
+      "username": "john.doe@example.com",
+      "email": "john.doe@example.com",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "hashedpassword1"
+        }
+      ],
+      "realmRoles": ["client",
+                     "barber"],
+      "attributes": {
+        "firstName": "John",
+        "lastName": "Doe"
+      },
+      "emailVerified": true
+    },
+    {
+      "id": "41e28799-7aa8-438b-88b8-e6292b35bb11",
+      "username": "jane.smith@example.com",
+      "email": "jane.smith@example.com",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "hashedpassword2"
+        }
+      ],
+      "realmRoles": ["client"],
+      "attributes": {
+        "firstName": "Jane",
         "lastName": "Smith"
+      },
+      "emailVerified": true
+    },
+    {
+      "id": "41e28799-7aa8-438b-88b8-e6292b35bb21",
+      "username": "mike.johnson@example.com",
+      "email": "mike.johnson@example.com",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "hashedpassword3"
+        }
+      ],
+      "realmRoles": ["client",
+                     "barber"],
+      "attributes": {
+        "firstName": "Mike",
+        "lastName": "Johnson"
+      },
+      "emailVerified": true
+    },
+    {
+      "id": "41e28799-7aa8-438b-88b8-e6292b35bb31",
+      "username": "sarah.brown@example.com",
+      "email": "sarah.brown@example.com",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "hashedpassword4"
+        }
+      ],
+      "realmRoles": ["client"],
+      "attributes": {
+        "firstName": "Sarah",
+        "lastName": "Brown"
       },
       "emailVerified": true
     },
