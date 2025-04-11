@@ -7,7 +7,11 @@ from modules.time_slot_schema import TimeSlotUpdate
 from typing import List, Optional
 from fastapi import HTTPException
 from datetime import time
+import logging
 
+
+logger = logging.getLogger("schedule_operations")
+logger.setLevel(logging.ERROR)
 """
 CRUD operations for interacting with the schedule database table
 """
@@ -54,7 +58,8 @@ class ScheduleOperations:
 
             result = await self.db.execute(select(Schedule).limit(limit).offset(offset))
             return result.scalars().all()
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred while fetching schedule blocks",
@@ -69,7 +74,8 @@ class ScheduleOperations:
                 .filter(Schedule.schedule_id == schedule_id)
             )
             return result.scalars().first()
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred while fetching the schedule block",
@@ -119,7 +125,8 @@ class ScheduleOperations:
             await self.db.commit()
             await self.db.refresh(schedule)
             return schedule
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred while updating the desired schedule block",
@@ -137,7 +144,8 @@ class ScheduleOperations:
             await self.db.delete(schedule)
             await self.db.commit()
             return True
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred while deleting the desired schedule block",

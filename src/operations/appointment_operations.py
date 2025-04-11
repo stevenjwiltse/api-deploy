@@ -2,11 +2,15 @@ from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
-from modules.user.models import Appointment, User, Barber, TimeSlot, Appointment_TimeSlot, AppointmentService
+from modules.user.models import Appointment, User, Barber, TimeSlot, Appointment_TimeSlot, AppointmentService, Service
 from typing import List, Optional
 from fastapi import HTTPException
 from modules.appointment_schema import AppointmentCreate, AppointmentResponse
+import logging
+from operations.email_operations import email_operations
 
+logger = logging.getLogger("appointment_operations")
+logger.setLevel(logging.ERROR)
 
 '''
 CRUD operations for interacting with the appointment database table
@@ -100,10 +104,11 @@ class AppointmentOperations:
                 service_id=appointment_data.service_id
             )
         
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
-                detail="An unexpected error occurred during appointment creation"
+                detail="An unexpected error occurred during appointment creation",
             )
         
     #Get all appointments
@@ -160,7 +165,8 @@ class AppointmentOperations:
                 )
             return responses
 
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred while fetching appointments"
@@ -198,7 +204,8 @@ class AppointmentOperations:
                 service_id=service_ids
             )
 
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred while fetching the appointment"
@@ -272,7 +279,8 @@ class AppointmentOperations:
                 service_id=service_ids
             )
 
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred while updating the desired appointment"
@@ -299,7 +307,8 @@ class AppointmentOperations:
             await self.db.delete(appointment)
             await self.db.commit()
             return True
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred while deleting the desired appointment"
