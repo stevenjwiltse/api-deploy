@@ -96,7 +96,6 @@ class BarberOperations:
             ).distinct(Barber.barber_id)
         )
         barbers = result.scalars().all()
-        print(f"Barbers found: {barbers}")
         if page and limit:
             offset = (page - 1) * limit
             barbers = barbers[offset:offset + limit]

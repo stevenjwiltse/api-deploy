@@ -30,91 +30,112 @@ class AppointmentOperations:
     async def create_appointment(
         self, appointment_data: AppointmentCreate
     ) -> AppointmentResponse:
-        try:
+        # try:
 
-            # check if user_id exists in user table
-            user_result = await self.db.execute(
-                select(User).filter(User.user_id == appointment_data.user_id)
-            )
-            user = user_result.scalars().first()
+        # check if user_id exists in user table
+        user_result = await self.db.execute(
+            select(User).filter(User.user_id == appointment_data.user_id)
+        )
+        user = user_result.scalars().first()
 
-            if not user:
-                raise HTTPException(
-                    status_code=400, detail="Invalid user_id: User does not exist"
-                )
-
-            # check if barber_id exists in the Barber table
-            barber_result = await self.db.execute(
-                select(Barber).filter(Barber.barber_id == appointment_data.barber_id)
-            )
-            barber = barber_result.scalars().first()
-
-            if not barber:
-                raise HTTPException(
-                    status_code=400, detail="Invalid barber_id: Barber does not exist"
-                )
-
-            # check if slot_id(s) exists in the time_slot table
-            for slot_id in appointment_data.time_slot:
-                time_slot_result = await self.db.execute(
-                    select(TimeSlot).filter(TimeSlot.slot_id == slot_id)
-                )
-                time_slot = time_slot_result.scalars().first()
-
-                if not time_slot:
-                    raise HTTPException(
-                        status_code=400,
-                        detail="Invalid slot_id: Time slot does not exist",
-                    )
-
-            # create new appointment if both exist
-            new_appointment = Appointment(
-                user_id=appointment_data.user_id,
-                barber_id=appointment_data.barber_id,
-                status=appointment_data.status,
-            )
-            self.db.add(new_appointment)
-            await self.db.commit()
-            await self.db.refresh(new_appointment)
-
-            # Update the appointment_time_slot table with the newly associated appointment_id and slot_id(s)
-            for slot_id in appointment_data.time_slot:
-                new_appointment_time_slot = Appointment_TimeSlot(
-                    appointment_id=new_appointment.appointment_id, slot_id=slot_id
-                )
-                self.db.add(new_appointment_time_slot)
-
-            # Update the is_available field in TimeSlot table for the selected slot_id(s)
-            await self.db.execute(
-                TimeSlot.__table__.update()
-                .where(TimeSlot.slot_id.in_(appointment_data.time_slot))
-                .values(is_booked=True)
-            )
-
-            # Update the service table with the newly associated appointment_id and service_id(s)
-            for service_id in appointment_data.service_id:
-                new_appointment_service = AppointmentService(
-                    service_id=service_id, appointment_id=new_appointment.appointment_id
-                )
-                self.db.add(new_appointment_service)
-            await self.db.commit()
-
-            # Refresh appointment again to ensure the session is aware of its latest state
-            await self.db.refresh(new_appointment)
-
-
-            # Return the appointment response
-            return new_appointment.to_response_schema()
-
-        except SQLAlchemyError:
+        if not user:
             raise HTTPException(
-                status_code=500,
-                detail="An unexpected error occurred during appointment creation",
+                status_code=400, detail="Invalid user_id: User does not exist"
             )
+
+        # check if barber_id exists in the Barber table
+        barber_result = await self.db.execute(
+            select(Barber).filter(Barber.barber_id == appointment_data.barber_id)
+        )
+        barber = barber_result.scalars().first()
+
+        if not barber:
+            raise HTTPException(
+                status_code=400, detail="Invalid barber_id: Barber does not exist"
+            )
+
+        # check if slot_id(s) exists in the time_slot table
+        appointment_date: str
+        for slot_id in appointment_data.time_slot:
+            time_slot_result = await self.db.execute(
+                select(TimeSlot).filter(TimeSlot.slot_id == slot_id)
+            )
+            time_slot = time_slot_result.scalars().first()
+
+            if not time_slot:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid slot_id: Time slot does not exist",
+                )
+
+            appointment_date = time_slot.schedule.date
+
+        # create new appointment if both exist
+        new_appointment = Appointment(
+            user_id=appointment_data.user_id,
+            appointment_date=appointment_date,
+            barber_id=appointment_data.barber_id,
+            status=appointment_data.status,
+        )
+        self.db.add(new_appointment)
+        await self.db.commit()
+        await self.db.refresh(new_appointment)
+
+        # Update the appointment_time_slot table with the newly associated appointment_id and slot_id(s)
+        for slot_id in appointment_data.time_slot:
+            new_appointment_time_slot = Appointment_TimeSlot(
+                appointment_id=new_appointment.appointment_id, slot_id=slot_id
+            )
+            self.db.add(new_appointment_time_slot)
+
+        # Update the is_available field in TimeSlot table for the selected slot_id(s)
+        await self.db.execute(
+            TimeSlot.__table__.update()
+            .where(TimeSlot.slot_id.in_(appointment_data.time_slot))
+            .values(is_booked=True)
+        )
+
+        # Update the service table with the newly associated appointment_id and service_id(s)
+        for service_id in appointment_data.service_id:
+            new_appointment_service = AppointmentService(
+                service_id=service_id, appointment_id=new_appointment.appointment_id
+            )
+            self.db.add(new_appointment_service)
+        await self.db.commit()
+
+        await self.db.refresh(new_appointment)
+
+        # Refresh appointment again to ensure the session is aware of its latest state
+        result = await self.db.execute(
+            select(Appointment).filter(
+                Appointment.appointment_id == new_appointment.appointment_id
+            ).options(
+                selectinload(Appointment.appointment_time_slots),
+                selectinload(Appointment.appointment_services),
+                selectinload(Appointment.user),
+                selectinload(Appointment.barber),
+            )
+        )
+        appt = result.scalars().first()
+
+        if not appt:
+            return None
+
+        return appt.to_response_schema()
+
+    # except SQLAlchemyError:
+    #     raise HTTPException(
+    #         status_code=500,
+    #         detail="An unexpected error occurred during appointment creation",
+    #     )
 
     # Get all appointments
     async def get_all_appointments(
-        self, page: int, limit: int
+        self,
+        page: int,
+        limit: int,
+        user_id: Optional[int] = None,
+        barber_id: Optional[int] = None,
     ) -> List[AppointmentResponse]:
         try:
             # Calculate offset for SQL query
@@ -127,52 +148,7 @@ class AppointmentOperations:
 
             if not appointments:
                 return None
-
-            # Extract appointment_ids
-            appointment_ids = [appt.appointment_id for appt in appointments]
-
-            # Get slot_ids and link to appointment_ids
-            time_slot_result = await self.db.execute(
-                select(Appointment_TimeSlot).where(
-                    Appointment_TimeSlot.appointment_id.in_(appointment_ids)
-                )
-            )
-
-            time_slot_links = time_slot_result.scalars().all()
-
-            # Group slot_ids by appointment_id
-            time_slot_dict = {}
-            for link in time_slot_links:
-                time_slot_dict.setdefault(link.appointment_id, []).append(link.slot_id)
-
-            # Get service_ids and link to appointment_ids
-            service_result = await self.db.execute(
-                select(AppointmentService).where(
-                    AppointmentService.appointment_id.in_(appointment_ids)
-                )
-            )
-
-            service_links = service_result.scalars().all()
-
-            # Group service_ids by appointment_id
-            service_dict = {}
-            for link in service_links:
-                service_dict.setdefault(link.appointment_id, []).append(link.service_id)
-
-            # combine into response list
-            responses = []
-            for appt in appointments:
-                responses.append(
-                    AppointmentResponse(
-                        appointment_id=appt.appointment_id,
-                        user_id=appt.user_id,
-                        barber_id=appt.barber_id,
-                        status=appt.status,
-                        time_slot=time_slot_dict.get(appt.appointment_id, []),
-                        service_id=service_dict.get(appt.appointment_id, []),
-                    )
-                )
-            return responses
+            return [app.to_response_schema() for app in appointments]
 
         except SQLAlchemyError:
             raise HTTPException(
@@ -184,22 +160,22 @@ class AppointmentOperations:
     async def get_appointment_by_id(
         self, appointment_id: int
     ) -> Optional[AppointmentResponse]:
-        try:
-            result = await self.db.execute(
-                select(Appointment).filter(Appointment.appointment_id == appointment_id)
-            )
-            appt = result.scalars().first()
+        # try:
+        result = await self.db.execute(
+            select(Appointment).filter(Appointment.appointment_id == appointment_id)
+        )
+        appt = result.scalars().first()
 
-            if not appt:
-                return None
-            
-            return appt.to_response_schema()
+        if not appt:
+            return None
 
-        except SQLAlchemyError:
-            raise HTTPException(
-                status_code=500,
-                detail="An unexpected error occurred while fetching the appointment"
-            )
+        return appt.to_response_schema()
+
+        # except SQLAlchemyError:
+        #     raise HTTPException(
+        #         status_code=500,
+        #         detail="An unexpected error occurred while fetching the appointment"
+        #     )
 
     # Update an existing appointment
     async def update_appointment(

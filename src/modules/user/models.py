@@ -118,6 +118,7 @@ class Appointment(Base):
     __tablename__ = "appointment"
     
     appointment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    appointment_date: Mapped[Date] = mapped_column(Date, nullable=True, default=func.current_date())
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False)
     barber_id: Mapped[int] = mapped_column(Integer, ForeignKey("barber.barber_id", ondelete="CASCADE"), nullable=False)
     status: Mapped[AppointmentStatus] = mapped_column(Enum(AppointmentStatus), nullable=False)
@@ -141,6 +142,7 @@ class Appointment(Base):
     def to_response_schema(self) -> AppointmentResponse:
         return AppointmentResponse(
             appointment_id=self.appointment_id,
+            appointment_date=self.appointment_date.strftime("%Y-%m-%d") if self.appointment_date else None,
             user=self.user.to_response_schema(),
             barber=self.barber.to_response_schema(),
             status=self.status,
@@ -148,7 +150,7 @@ class Appointment(Base):
                 time_slot.time_slot.to_response_schema() for time_slot in self.appointment_time_slots
             ],
             services=[
-                service.service.to_reponse_schema() for service in self.appointment_services
+                service.service.to_response_schema() for service in self.appointment_services
             ]
         )
 
@@ -170,7 +172,7 @@ class Service(Base):
     # A service can be linked to multiple AppointmentService records (One-to-Many)
     appointment_services: Mapped[list["AppointmentService"]] = relationship(back_populates="service")
 
-    def to_reponse_schema(self) -> ServiceResponse:
+    def to_response_schema(self) -> ServiceResponse:
         return ServiceResponse(
             service_id=self.service_id,
             name=self.name,
@@ -246,7 +248,7 @@ class TimeSlot(Base):
     TimeSlot class relationships
     '''
     #Multiple time slots link to one schedule (Many-to-One)
-    schedule: Mapped["Schedule"] = relationship("Schedule", back_populates="time_slots")
+    schedule: Mapped["Schedule"] = relationship("Schedule", back_populates="time_slots", lazy="selectin")
 
     #Relationship to Appointment_TimeSlot (creates Many-to-Many with appointment)
     appointment_time_slots: Mapped[list["Appointment_TimeSlot"]] = relationship("Appointment_TimeSlot", back_populates="time_slot", cascade="all, delete, delete-orphan", lazy="selectin")

@@ -2,10 +2,10 @@ from pydantic import BaseModel
 from typing import Optional
 from enum import Enum
 
-from modules.user.user_schema import UserResponse
-from modules.user.barber_schema import BarberResponse
-from modules.user.service_schema import ServiceResponse
-from modules.time_slot_schema import TimeSlotChildResponse
+from .user.user_schema import UserResponse
+from .user.barber_schema import BarberResponse
+from .user.service_schema import ServiceResponse
+from .time_slot_schema import TimeSlotChildResponse
 
 
 '''
@@ -34,6 +34,7 @@ class AppointmentUpdate(BaseModel):
 
 class AppointmentResponse(BaseModel):
     appointment_id: int
+    appointment_date: str
     user: UserResponse
     barber: BarberResponse
     status: AppointmentStatus

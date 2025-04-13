@@ -58,6 +58,23 @@ async def get_users(
     user_ops = UserOperations(db_session)
     return await user_ops.get_all_users(page, limit)
 
+@user_router.get("/me", response_model=UserResponse, responses = {
+    400: {"model": ErrorResponse},
+    500: {"model": ErrorResponse}
+})
+async def get_current_user(db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+    # Get the current user from the token
+    user_info = AuthController.protected_endpoint(credentials)
+    
+    if not user_info:
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+    
+    print(user_info)
+    user_ops = UserOperations(db_session)
+    user = await user_ops.get_user_by_kc_id(user_info.id)
+    
+    return user.to_response_schema()
+
 # GET endpoint to retrieve a specific user in the database by their ID
 @user_router.get("/{user_id}", response_model=UserResponse, responses= {
      400: {"model": ErrorResponse},
@@ -70,20 +87,6 @@ async def get_user(user_id: int, db_session: DBSessionDep, credentials: HTTPAuth
     if not user:
         raise HTTPException(status_code=404, detail="User not found with ID provided")
     return user
-
-@user_router.get("/me", response_model=UserResponse, responses = {
-    400: {"model": ErrorResponse},
-    500: {"model": ErrorResponse}
-})
-async def get_current_user(db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
-    # Get the current user from the token
-    user_info = AuthController.protected_endpoint(credentials)
-    
-    
-    if not user_info:
-        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
-    
-    return user_info
 
 # PUT endpoint to update a specific user in the database by their ID
 @user_router.put("/{user_id}", response_model=UserResponse, responses = {

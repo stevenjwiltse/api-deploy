@@ -96,10 +96,13 @@ class UserOperations:
                 detail="An unexpected error occured"
             )
         
-    async def get_user_by_kc_id(self, kc_id: str) -> Optional[User]:
+    async def get_user_by_kc_id(self, kc_id: str) -> User:
         try:
             result = await self.db.execute(select(User).filter(User.kc_id == kc_id))
-            return result.scalars().first()
+            user = result.scalars().first()
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found with ID provided")
+            return user
         # Handle generic exceptions, wrong ID provided error already handled in router
         except SQLAlchemyError:
             raise HTTPException(

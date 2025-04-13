@@ -47,7 +47,6 @@ async def get_all_barbers(
     barber_ops = BarberOperations(db_session)
     response = await barber_ops.get_all_barbers(page, limit)
     if schedule_date:
-        print(f"Filtering barbers by schedule date: {schedule_date}")
         response = await barber_ops.list_barbers_by_schedule_date(schedule_date, page, limit)
 
     barbers: List[BarberResponse] = []

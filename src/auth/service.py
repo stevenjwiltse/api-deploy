@@ -66,13 +66,10 @@ class AuthService:
 
             # Parses user roles into list
             roles = token_info.get("realm_access", {}).get("roles", [])
-            
-            # Get user record from database
-            user_ops = UserOperations(DBSessionDep)
-            user = user_ops.get_by_kc_id(token_info["sub"])
 
 
             this_user = UserInfo(
+                id=token_info["sub"],
                 username=token_info["preferred_username"],
                 email=token_info.get("email"),
                 full_name=token_info.get("name"),
