@@ -1,7 +1,6 @@
-import json
 import time
 
-from fastapi import HTTPException, status, Security, Depends
+from fastapi import HTTPException, status, Security
 from keycloak.exceptions import KeycloakAuthenticationError
 from core.config import settings
 from auth.models import UserInfo
@@ -9,8 +8,6 @@ from keycloak import KeycloakOpenID, KeycloakOpenIDConnection, KeycloakAdmin
 from modules.user.user_schema import UserCreate, UserUpdate
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from operations.user_operations import UserOperations
-from core.dependencies import DBSessionDep
 
 bearer_scheme = HTTPBearer()
 
@@ -104,10 +101,8 @@ class AuthService:
         }
 
         try:
-            AuthService.keycloak_admin.create_user(user_representation)
-            user =  AuthService.keycloak_admin.get_users({"username": user.email})
-            kc_id = user[0]["id"]
-            return kc_id
+            kc_user_id = AuthService.keycloak_admin.create_user(user_representation)
+            return kc_user_id
         except Exception as e:
             raise HTTPException(
                 status_code=400, detail=f"Error creating user: {str(e)}"
@@ -156,3 +151,40 @@ class AuthService:
             raise HTTPException(status_code=401, detail="Invalid or expired token")
 
         return user_info
+    
+    def add_role_to_user(user_id: str, role_name: str):
+        """
+        Add a role to a user in Keycloak.
+        """
+        try:
+            # Check if the role exists
+            roles = AuthService.keycloak_admin.get_realm_roles()
+            role_object = next(
+                (role for role in roles if role["name"] == role_name), None
+            )
+            if not role_object:
+                raise HTTPException(
+                    status_code=404, detail=f"Role '{role_name}' not found"
+                )
+            # Assign the role to the user
+            AuthService.keycloak_admin.assign_realm_roles(
+                user_id=user_id, roles=[role_object]
+            )
+            
+            return {"message": "Role added successfully"}
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Error adding role to user: {str(e)}"
+            )
+        
+    def remove_role_from_user(user_id: str, role_name: str):
+        """
+        Remove a role from a user in Keycloak.
+        """
+        try:
+            AuthService.keycloak_admin.delete_realm_roles_of_user(user_id=user_id, roles=[role_name])
+            return {"message": "Role removed successfully"}
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Error removing role from user: {str(e)}"
+            )

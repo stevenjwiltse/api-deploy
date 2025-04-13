@@ -7,6 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from modules.user.models import Barber, Schedule, User
 from modules.user.barber_schema import BarberCreate
 
+from auth.service import AuthService
 
 '''
 Contains methods for barber creation and retrieval.
@@ -21,10 +22,10 @@ class BarberOperations:
     # Create a Barber
     async def create_barber(self, user: BarberCreate) -> Barber:
         result = await self.db.execute(select(User).filter(User.user_id == user.user_id))
-        first_result = result.scalars().first()
+        user_object = result.scalars().first()
 
         # Check to make sure the User ID provided links to a valid User
-        if not first_result:
+        if not user_object:
             raise HTTPException(
                 status_code = 400,
                 detail="User not found with provided ID"
@@ -45,6 +46,15 @@ class BarberOperations:
             self.db.add(barber)
             await self.db.commit()
             await self.db.refresh(barber)
+
+            # Add barber role to Keycloak user
+            try:
+                AuthService.add_role_to_user(user_object.kc_id, "barber")
+            except Exception as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Error adding role to Keycloak user: {str(e)}"
+                )
 
             return barber
 
