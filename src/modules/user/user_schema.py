@@ -24,6 +24,7 @@ class UserCreate(UserBase):
 
 class UserResponse(UserBase):
     user_id: int
+    roles: Optional[list[str]] = []
 
     class Config:
         from_attributes = True

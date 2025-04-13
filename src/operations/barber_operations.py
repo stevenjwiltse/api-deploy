@@ -1,11 +1,13 @@
+from typing import List
+
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
-from modules.user.models import Barber
-from modules.user.models import User
-from modules.user.barber_schema import BarberCreate, BarberResponse
-from typing import List
+from modules.user.models import Barber, Schedule, User
+from modules.user.barber_schema import BarberCreate
+
+from auth.service import AuthService
 import logging
 
 logger = logging.getLogger("barber_operations")
@@ -24,15 +26,15 @@ class BarberOperations:
     async def create_barber(self, user: BarberCreate) -> Barber:
         try:
             result = await self.db.execute(select(User).filter(User.user_id == user.user_id))
-            first_result = result.scalars().first()
+            user_object = result.scalars().first()
 
             # Check to make sure the User ID provided links to a valid User
-            if not first_result:
+            if not user_object:
                 raise HTTPException(
                     status_code = 400,
                     detail="User not found with provided ID"
                 )
-        
+            
             existing_barber = await self.db.execute(select(Barber).filter(Barber.user_id == user.user_id))
             first_existing_barber = existing_barber.scalars().first()
 
@@ -49,10 +51,22 @@ class BarberOperations:
             await self.db.commit()
             await self.db.refresh(barber)
 
+            # Add barber role to Keycloak user
+            try:
+                AuthService.add_role_to_user(user_object.kc_id, "barber")
+            except Exception as e:
+                logger.error(f"Error adding role to Keycloak user: {str(e)}")
+                await self.db.rollback()
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Error adding role to Keycloak user: {str(e)}"
+                )
+
             return barber
 
         except SQLAlchemyError as e:
             logger.error(e)
+            await self.db.rollback()
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred"
@@ -88,3 +102,22 @@ class BarberOperations:
                 status_code=500,
                 detail="An unexpected error occurred"
             )
+        
+    async def list_barbers_by_schedule_date(self, schedule_date: str, page: int = None, limit: int = None) -> List[Barber]:
+        # Get a Schedule object by date
+        schedules = await self.db.execute(select(Schedule).filter(Schedule.date == schedule_date))
+        schedules = schedules.scalars().all()
+        if not schedules:
+            return []
+
+        # Get all barbers by joining the Schedule table on the barber_id
+        result = await self.db.execute(
+            select(Barber).join(Schedule).filter(Schedule.schedule_id.in_([schedule.schedule_id for schedule in schedules])
+            ).distinct(Barber.barber_id)
+        )
+        barbers = result.scalars().all()
+        if page and limit:
+            offset = (page - 1) * limit
+            barbers = barbers[offset:offset + limit]
+        return barbers
+

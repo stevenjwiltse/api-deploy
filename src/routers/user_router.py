@@ -1,14 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from core.db import get_db_session
 from core.dependencies import DBSessionDep
 from operations.user_operations import UserOperations
-from modules.user.user_schema import UserResponse, UserCreate, UserBase, UserUpdate
+from modules.user.user_schema import UserResponse, UserCreate, UserUpdate
 from auth.controller import AuthController
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-import logging
 from modules.user.error_response_schema import ErrorResponse
+
+
 '''
 Endpoints for interactions with users table
 '''
@@ -50,6 +49,22 @@ async def get_users(
     user_ops = UserOperations(db_session)
     return await user_ops.get_all_users(page, limit)
 
+@user_router.get("/me", response_model=UserResponse, responses = {
+    400: {"model": ErrorResponse},
+    500: {"model": ErrorResponse}
+})
+async def get_current_user(db_session: DBSessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+    # Get the current user from the token
+    user_info = AuthController.protected_endpoint(credentials)
+    
+    if not user_info:
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+    
+    user_ops = UserOperations(db_session)
+    user = await user_ops.get_user_by_kc_id(user_info.id)
+    
+    return user.to_response_schema()
+
 # GET endpoint to retrieve a specific user in the database by their ID
 @user_router.get("/{user_id}", response_model=UserResponse, responses= {
      400: {"model": ErrorResponse},
@@ -74,6 +89,7 @@ async def update_user(user_id: int, user: UserUpdate, db_session: DBSessionDep, 
     updated_user = await user_ops.update_user(user_id, user)
     if not updated_user:
         raise HTTPException(status_code=404, detail="User not found with ID provided")
+    
     return updated_user
 
 # DELETE endpoint to delete a user from the database by their ID

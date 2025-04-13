@@ -30,6 +30,7 @@ class TimeSlotChildResponse(BaseModel):
     start_time: time
     end_time: time
     is_available: bool
+    is_booked: bool
 
     class Config:
         from_attributes = True
@@ -37,6 +38,7 @@ class TimeSlotChildResponse(BaseModel):
 class TimeSlotResponse(TimeSlotCreate):
     slot_id: int
     is_available: bool
+    is_booked: bool
 
     class Config:
         from_attributes = True

@@ -2,6 +2,12 @@ from pydantic import BaseModel
 from typing import Optional
 from enum import Enum
 
+from .user.user_schema import UserResponse
+from .user.barber_schema import BarberResponse
+from .user.service_schema import ServiceResponse
+from .time_slot_schema import TimeSlotChildResponse
+
+
 '''
 Pydantic validation models for the appointment table endpoints
 '''
@@ -28,11 +34,12 @@ class AppointmentUpdate(BaseModel):
 
 class AppointmentResponse(BaseModel):
     appointment_id: int
-    user_id: int
-    barber_id: int
+    appointment_date: str
+    user: UserResponse
+    barber: BarberResponse
     status: AppointmentStatus
-    time_slot: list[int] 
-    service_id: list[int]
+    time_slots: list[TimeSlotChildResponse] 
+    services: list[ServiceResponse]
 
 
     class Config:

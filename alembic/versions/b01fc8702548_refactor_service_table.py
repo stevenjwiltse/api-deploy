@@ -10,6 +10,7 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
+import datetime
 
 # revision identifiers, used by Alembic.
 revision: str = 'b01fc8702548'
@@ -239,13 +240,13 @@ def upgrade() -> None:
             {
                 "schedule_id": 1,
                 "barber_id": 1,
-                "date": "2025-02-17",
+                "date": (datetime.date.today() + datetime.timedelta(days=2)).strftime("%Y-%m-%d"),
                 "is_working": True
             },
             {
                 "schedule_id": 2,
                 "barber_id": 2,
-                "date": "2025-02-17",
+                "date": (datetime.date.today() + datetime.timedelta(days=2)).strftime("%Y-%m-%d"),
                 "is_working": True
             }
         ]

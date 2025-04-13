@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
+import datetime
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Query
 from operations.barber_operations import BarberOperations
 from core.dependencies import DBSessionDep
 from modules.user.barber_schema import BarberResponse, BarberCreate
-from modules.user.user_schema import UserResponse
 from typing import List
 from auth.controller import AuthController
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -38,11 +39,15 @@ async def get_all_barbers(
     db_session: DBSessionDep, 
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     page: int = Query(1, ge=1),
-    limit: int = Query(10, le=100)
+    limit: int = Query(10, le=100),
+    # Optional query parameters
+    schedule_date: Optional[datetime.date] = Query(None, description="Date to filter barbers by schedule"),
 ):
-
+    AuthController.protected_endpoint(credentials)
     barber_ops = BarberOperations(db_session)
     response = await barber_ops.get_all_barbers(page, limit)
+    if schedule_date:
+        response = await barber_ops.list_barbers_by_schedule_date(schedule_date, page, limit)
 
     barbers: List[BarberResponse] = []
     for barber in response:
