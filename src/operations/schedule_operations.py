@@ -9,7 +9,11 @@ from modules.time_slot_schema import TimeSlotUpdate
 from typing import List, Optional
 from fastapi import HTTPException
 from datetime import time
+import logging
 
+
+logger = logging.getLogger("schedule_operations")
+logger.setLevel(logging.ERROR)
 """
 CRUD operations for interacting with the schedule database table
 """
@@ -21,32 +25,34 @@ class ScheduleOperations:
 
     # Create a new schedule block
     async def create_schedule(self, schedule_data: ScheduleCreate) -> Schedule:
-        # try:
-        new_schedule = Schedule(**schedule_data.model_dump(exclude={"time_slots"}))
-        self.db.add(new_schedule)
-        await self.db.commit()
-        await self.db.refresh(new_schedule)
+        try:
+            new_schedule = Schedule(**schedule_data.model_dump(exclude={"time_slots"}))
+            self.db.add(new_schedule)
+            await self.db.commit()
+            await self.db.refresh(new_schedule)
 
-        # Create time slots for the schedule, each 30 minutes
-        # starting from 9:00 AM to 5:00 PM
-        for time_slot in schedule_data.time_slots:
-            self.db.add(
-                TimeSlot(
-                    schedule_id=new_schedule.schedule_id,
-                    start_time=time_slot.start_time,
-                    end_time=time_slot.end_time,
-                    is_available=time_slot.is_available,
+            # Create time slots for the schedule, each 30 minutes
+            # starting from 9:00 AM to 5:00 PM
+            for time_slot in schedule_data.time_slots:
+                self.db.add(
+                    TimeSlot(
+                        schedule_id=new_schedule.schedule_id,
+                        start_time=time_slot.start_time,
+                        end_time=time_slot.end_time,
+                        is_available=time_slot.is_available,
+                    )
                 )
-            )
-        await self.db.commit()
-        await self.db.refresh(new_schedule)
+            await self.db.commit()
+            await self.db.refresh(new_schedule)
 
-        return new_schedule
-        # except SQLAlchemyError:
-        #     raise HTTPException(
-        #         status_code=500,
-        #         detail="An unexpected error occurred during schedule block creation",
-        #     )
+            return new_schedule
+        except SQLAlchemyError as e:
+            logger.error(e)
+            await self.db.rollback()
+            raise HTTPException(
+                status_code=500,
+                detail="An unexpected error occurred during schedule block creation",
+            )
 
     # Get all schedule blocks
     async def get_all_schedules(self, page: int, limit: int, schedule_date: datetime.date = None, barber_id: int = None) -> List[Schedule]:
@@ -60,7 +66,8 @@ class ScheduleOperations:
                 select_query = select_query.filter(Schedule.barber_id == barber_id)
             result = await self.db.execute(select_query)
             return result.scalars().all()
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred while fetching schedule blocks",
@@ -75,7 +82,8 @@ class ScheduleOperations:
                 .filter(Schedule.schedule_id == schedule_id)
             )
             return result.scalars().first()
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred while fetching the schedule block",
@@ -125,7 +133,9 @@ class ScheduleOperations:
             await self.db.commit()
             await self.db.refresh(schedule)
             return schedule
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
+            await self.db.rollback()
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred while updating the desired schedule block",
@@ -143,7 +153,8 @@ class ScheduleOperations:
             await self.db.delete(schedule)
             await self.db.commit()
             return True
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred while deleting the desired schedule block",

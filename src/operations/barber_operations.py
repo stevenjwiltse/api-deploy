@@ -8,7 +8,10 @@ from modules.user.models import Barber, Schedule, User
 from modules.user.barber_schema import BarberCreate
 
 from auth.service import AuthService
+import logging
 
+logger = logging.getLogger("barber_operations")
+logger.setLevel(logging.ERROR)
 '''
 Contains methods for barber creation and retrieval.
 Updating a Barber's information should be done using the User ID in the user router.
@@ -21,27 +24,28 @@ class BarberOperations:
     
     # Create a Barber
     async def create_barber(self, user: BarberCreate) -> Barber:
-        result = await self.db.execute(select(User).filter(User.user_id == user.user_id))
-        user_object = result.scalars().first()
-
-        # Check to make sure the User ID provided links to a valid User
-        if not user_object:
-            raise HTTPException(
-                status_code = 400,
-                detail="User not found with provided ID"
-            )
-        
-        existing_barber = await self.db.execute(select(Barber).filter(Barber.user_id == user.user_id))
-        first_existing_barber = existing_barber.scalars().first()
-
-        # Make sure the user is not already a barber
-        if first_existing_barber:
-            raise HTTPException(
-                status_code=400,
-                detail="User is already a barber"
-            )
-        
         try:
+            result = await self.db.execute(select(User).filter(User.user_id == user.user_id))
+            user_object = result.scalars().first()
+
+            # Check to make sure the User ID provided links to a valid User
+            if not user_object:
+                raise HTTPException(
+                    status_code = 400,
+                    detail="User not found with provided ID"
+                )
+            
+            existing_barber = await self.db.execute(select(Barber).filter(Barber.user_id == user.user_id))
+            first_existing_barber = existing_barber.scalars().first()
+
+            # Make sure the user is not already a barber
+            if first_existing_barber:
+                raise HTTPException(
+                    status_code=400,
+                    detail="User is already a barber"
+                )
+        
+        
             barber = Barber(user_id=user.user_id)
             self.db.add(barber)
             await self.db.commit()
@@ -51,6 +55,8 @@ class BarberOperations:
             try:
                 AuthService.add_role_to_user(user_object.kc_id, "barber")
             except Exception as e:
+                logger.error(f"Error adding role to Keycloak user: {str(e)}")
+                await self.db.rollback()
                 raise HTTPException(
                     status_code=400,
                     detail=f"Error adding role to Keycloak user: {str(e)}"
@@ -58,7 +64,9 @@ class BarberOperations:
 
             return barber
 
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
+            await self.db.rollback()
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred"
@@ -72,7 +80,8 @@ class BarberOperations:
 
             result = await self.db.execute(select(Barber).limit(limit).offset(offset))
             return result.scalars().all()
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred"
@@ -87,7 +96,8 @@ class BarberOperations:
                 raise HTTPException(status_code = 400, detail="No barber found with provided ID")
             else:
                 return first_result
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred"

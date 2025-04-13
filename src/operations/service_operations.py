@@ -5,6 +5,10 @@ from sqlalchemy.exc import SQLAlchemyError
 from modules.user.models import Service
 from modules.user.service_schema import ServiceBase, ServiceResponse, ServiceUpdate
 from fastapi import HTTPException
+import logging
+
+logger = logging.getLogger("service_operations")
+logger.setLevel(logging.ERROR)
 
 '''
 Contains CRUD operations relating to services
@@ -22,7 +26,8 @@ class ServiceOperations:
             await self.db.refresh(new_service)
             return new_service
 
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred"
@@ -35,7 +40,8 @@ class ServiceOperations:
 
             services = await self.db.execute(select(Service).limit(limit).offset(offset))
             return services.scalars().all()
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred"
@@ -61,7 +67,8 @@ class ServiceOperations:
 
             return service_to_update
 
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred"
@@ -79,7 +86,8 @@ class ServiceOperations:
             await self.db.commit()
             return True
         
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occurred"

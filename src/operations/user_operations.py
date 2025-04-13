@@ -7,6 +7,11 @@ from typing import List, Optional
 from fastapi import HTTPException
 
 from auth.service import AuthService
+import logging
+
+logger = logging.getLogger("user_operations")
+logger.setLevel(logging.ERROR)
+
 '''
 CRUD operations for interacting with users database table
 '''
@@ -16,33 +21,34 @@ class UserOperations:
 
     # Create a user
     async def create_user(self, user_data: UserCreate) -> User:
+        
+        '''
+        Checking for three most common errors:
+        A phone number or email already exists, or phone number is greater than 10 digits
+        '''
+        existing_user_email = await self.db.execute(select(User).filter(User.email == user_data.email))
+
+        if existing_user_email.scalars().first():
+            raise HTTPException(
+                status_code=400,
+                detail="A user already exists with the provided email"
+            )
+        
+        existing_user_phone = await self.db.execute(select(User).filter(User.phoneNumber == user_data.phoneNumber))
+
+        if existing_user_phone.scalars().first():
+            raise HTTPException(
+                status_code=400,
+                detail="A user already exists with the provided phone number"
+            )
+        
+        if len(user_data.phoneNumber) > 10:
+            raise HTTPException(
+                status_code=400,
+                detail="Phone number must be 10 digits or less"
+            )
+
         try:
-            '''
-            Checking for three most common errors:
-            A phone number or email already exists, or phone number is greater than 10 digits
-            '''
-            existing_user_email = await self.db.execute(select(User).filter(User.email == user_data.email))
-
-            if existing_user_email.scalars().first():
-                raise HTTPException(
-                    status_code=400,
-                    detail="A user already exists with the provided email"
-                )
-            
-            existing_user_phone = await self.db.execute(select(User).filter(User.phoneNumber == user_data.phoneNumber))
-
-            if existing_user_phone.scalars().first():
-                raise HTTPException(
-                    status_code=400,
-                    detail="A user already exists with the provided phone number"
-                )
-            
-            if len(user_data.phoneNumber) > 10:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Phone number must be 10 digits or less"
-                )
-            
             # Creates a new user
             new_user = User(**user_data.model_dump())
             try:
@@ -60,7 +66,10 @@ class UserOperations:
             await self.db.refresh(new_user)
             
             return new_user
+        # If another error is returned that was somehow not caught above, return generic error message.
         except SQLAlchemyError as e:
+            logger.error(e)
+            await self.db.rollback()
             raise HTTPException(
                 status_code=500,
                 detail=f"An unexpected error occurred: {str(e)}"
@@ -76,7 +85,8 @@ class UserOperations:
             result = await self.db.execute(select(User).limit(limit).offset(offset))
             return result.scalars().all()
         # Not anticipating many errors here, but just in case
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail=f"An unexpected error occured"
@@ -89,7 +99,8 @@ class UserOperations:
             result = await self.db.execute(select(User).filter(User.user_id == user_id))
             return result.scalars().first()
         # Handle generic exceptions, wrong ID provided error already handled in router
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occured"
@@ -103,7 +114,9 @@ class UserOperations:
                 raise HTTPException(status_code=404, detail="User not found with ID provided")
             return user
         # Handle generic exceptions, wrong ID provided error already handled in router
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
+            await self.db.rollback()
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occured"
@@ -111,20 +124,21 @@ class UserOperations:
 
     # Update user by their ID
     async def update_user(self, user_id: int, user_data) -> Optional[User]:
-        if user_data.email:
-            existing_user_email = await self.db.execute(select(User).filter(User.email == user_data.email))
-            if existing_user_email.scalars().first():
-                raise HTTPException(status_code=400, detail="A user already exists with the provided email")
-
-        if user_data.phoneNumber:
-            existing_user_phone = await self.db.execute(select(User).filter(User.phoneNumber == user_data.phoneNumber))
-            if existing_user_phone.scalars().first():
-                raise HTTPException(status_code=400, detail="A user already exists with the provided phone number")
-
-            if len(user_data.phoneNumber) > 10:
-                raise HTTPException(status_code=400, detail="Phone number must be 10 digits or less")
-
         try:
+            if user_data.email:
+                existing_user_email = await self.db.execute(select(User).filter(User.email == user_data.email))
+                if existing_user_email.scalars().first():
+                    raise HTTPException(status_code=400, detail="A user already exists with the provided email")
+
+            if user_data.phoneNumber:
+                existing_user_phone = await self.db.execute(select(User).filter(User.phoneNumber == user_data.phoneNumber))
+                if existing_user_phone.scalars().first():
+                    raise HTTPException(status_code=400, detail="A user already exists with the provided phone number")
+
+                if len(user_data.phoneNumber) > 10:
+                    raise HTTPException(status_code=400, detail="Phone number must be 10 digits or less")
+
+        
             result = await self.db.execute(select(User).filter(User.user_id == user_id))
             user = result.scalars().first()
             if not user:
@@ -141,6 +155,9 @@ class UserOperations:
             try:
                 AuthService.update_kc_user(user_data)
             except Exception as e:
+                logger.error(e)
+                # Rollback database changes if Keycloak update fails
+                await self.db.rollback()
                 raise HTTPException(
                     status_code=400,
                     detail=f"Error updating Keycloak user: {str(e)}"
@@ -148,7 +165,8 @@ class UserOperations:
 
             return user
     
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
             raise HTTPException(
                 status_code=500, 
                 detail="An unexpected error occurred"
@@ -173,7 +191,9 @@ class UserOperations:
             return True
         
         # Handle generic exceptions, wrong ID provided error already handled in router
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logger.error(e)
+            await self.db.rollback()
             raise HTTPException(
                 status_code=500,
                 detail="An unexpected error occured"
