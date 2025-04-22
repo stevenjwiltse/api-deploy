@@ -211,7 +211,10 @@ class UserOperations:
                 return False
             
             # Check if the old password is correct
-            if not AuthService.authenticate_user(user.email, password_data.old_password):
+            try:
+                AuthService.authenticate_user(user.email, password_data.old_password)
+            except Exception as e:
+                logger.error(e)
                 raise HTTPException(status_code=400, detail="Old password is incorrect")
 
             # Check if new password and confirm password match
