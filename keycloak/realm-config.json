@@ -26,7 +26,7 @@
   "oauth2DeviceCodeLifespan": 600,
   "oauth2DevicePollingInterval": 5,
   "enabled": true,
-  "sslRequired": "external",
+  "sslRequired": "none",
   "registrationAllowed": false,
   "registrationEmailAsUsername": false,
   "rememberMe": false,
@@ -769,7 +769,9 @@
         "/realms/barbershop/account/*"
       ],
       "webOrigins": [
-        "http://localhost:8000"
+        "http://localhost:8000",
+        "http://18.220.221.175",
+        "http://barbershop-app.duckdns.org"
       ],
       "notBefore": 0,
       "bearerOnly": false,
@@ -987,11 +989,16 @@
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
         "http://localhost:5173/*",
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "http://18.220.221.175:/*",
+        "http://18.220.221.175",
+        "http://barbershop-app.duckdns.org/*",
+        "http://barbershop-app.duckdns.org"
       ],
       "webOrigins": [
-        "http://localhost:5173/*",
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "http://18.220.221.175",
+        "http://barbershop-app.duckdns.org"
       ],
       "notBefore": 0,
       "bearerOnly": false,
