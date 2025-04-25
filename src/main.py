@@ -32,6 +32,10 @@ app = FastAPI(lifespan=lifespan)
 # Initialize the HTTPBearer scheme for authentication
 bearer_scheme = HTTPBearer()
 
+origins = [
+    "http://18.220.221.175:5173",  # Frontend origin
+]
+
 # Middleware configuration for Frontend-Backend communication
 app.add_middleware(
     CORSMiddleware,
